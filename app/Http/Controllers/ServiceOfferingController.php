@@ -19,8 +19,44 @@ class ServiceOfferingController extends Controller
     }
 
     /**
-     * GET /api/service-offerings
-     * Liste + recherche/filtre + tri + pagination
+     * @OA\Get(
+     *   path="/api/service-offerings",
+     *   tags={"ServiceOfferings"},
+     *   summary="Lister les services",
+     *   description="Recherche, filtres, tri et pagination.",
+     *   @OA\Parameter(name="status", in="query", @OA\Schema(type="string", enum={"draft","active","paused","archived"})),
+     *   @OA\Parameter(name="sub_category_id", in="query", @OA\Schema(type="integer")),
+     *   @OA\Parameter(name="provider_id", in="query", @OA\Schema(type="integer")),
+     *   @OA\Parameter(name="city", in="query", @OA\Schema(type="string")),
+     *   @OA\Parameter(name="country", in="query", @OA\Schema(type="string", maxLength=2)),
+     *   @OA\Parameter(name="q", in="query", description="Recherche par titre/description", @OA\Schema(type="string")),
+     *   @OA\Parameter(name="price_min", in="query", @OA\Schema(type="number", format="float")),
+     *   @OA\Parameter(name="price_max", in="query", @OA\Schema(type="number", format="float")),
+     *   @OA\Parameter(name="rating_min", in="query", @OA\Schema(type="number", format="float", minimum=0, maximum=5)),
+     *   @OA\Parameter(name="sort", in="query", description="published_at|price_amount|avg_rating|bookings_count|views_count|title|created_at", @OA\Schema(type="string")),
+     *   @OA\Parameter(name="dir", in="query", description="asc|desc", @OA\Schema(type="string", enum={"asc","desc"})),
+     *   @OA\Parameter(name="per_page", in="query", @OA\Schema(type="integer", minimum=1, maximum=100)),
+     *   @OA\Response(
+     *     response=200,
+     *     description="OK",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="success", type="boolean", example=true),
+     *       @OA\Property(property="message", type="string", example="OK"),
+     *       @OA\Property(property="data", type="object",
+     *         @OA\Property(property="current_page", type="integer", example=1),
+     *         @OA\Property(property="per_page", type="integer", example=15),
+     *         @OA\Property(property="total", type="integer", example=120),
+     *         @OA\Property(property="last_page", type="integer", example=8),
+     *         @OA\Property(property="data", type="array",
+     *           @OA\Items(type="object",
+     *             example={"id":10,"title":"Nettoyage de bureaux","price_amount":25000,"currency":"XAF","status":"active","avg_rating":4.6}
+     *           )
+     *         )
+     *       )
+     *     )
+     *   )
+     * )
      */
     public function index(Request $req)
     {
@@ -33,7 +69,7 @@ class ServiceOfferingController extends Controller
         // Filtres
         $q->when($req->filled('status'),
             fn($w) => $w->where('status', (string) $req->input('status')),
-            fn($w) => $w->where('status', '!=', 'archived') // défaut: exclure 'archived'
+            fn($w) => $w->where('status', '!=', 'archived') // défaut : exclure archived
         );
 
         $q->when($req->filled('sub_category_id'),
@@ -53,7 +89,7 @@ class ServiceOfferingController extends Controller
             $w->where('country', $country);
         });
 
-        // Recherche plein texte simple
+        // Recherche
         $q->when($req->filled('q'), function ($w) use ($req) {
             $term = trim((string) $req->input('q'));
             $w->where(function ($x) use ($term) {
@@ -62,7 +98,7 @@ class ServiceOfferingController extends Controller
             });
         });
 
-        // Plage de prix
+        // Prix
         if ($req->filled('price_min') && is_numeric($req->input('price_min'))) {
             $q->where('price_amount', '>=', (float) $req->input('price_min'));
         }
@@ -70,7 +106,7 @@ class ServiceOfferingController extends Controller
             $q->where('price_amount', '<=', (float) $req->input('price_max'));
         }
 
-        // Note minimale
+        // Note min
         if ($req->filled('rating_min') && is_numeric($req->input('rating_min'))) {
             $q->where('avg_rating', '>=', (float) $req->input('rating_min'));
         }
@@ -78,10 +114,7 @@ class ServiceOfferingController extends Controller
         // Tri
         $sort = (string) $req->input('sort', 'published_at');
         $dir  = strtolower((string) $req->input('dir', 'desc')) === 'asc' ? 'asc' : 'desc';
-        $allowedSorts = [
-            'published_at','price_amount','avg_rating',
-            'bookings_count','views_count','title','created_at'
-        ];
+        $allowedSorts = ['published_at','price_amount','avg_rating','bookings_count','views_count','title','created_at'];
         if (!in_array($sort, $allowedSorts, true)) {
             $sort = 'published_at';
         }
@@ -96,10 +129,26 @@ class ServiceOfferingController extends Controller
         return response()->success($data);
     }
 
-
     /**
-     * GET /api/service-offerings/{serviceOffering}
-     * Détail
+     * @OA\Get(
+     *   path="/api/service-offerings/{serviceOffering}",
+     *   tags={"ServiceOfferings"},
+     *   summary="Détail d'un service",
+     *   @OA\Parameter(name="serviceOffering", in="path", required=true, @OA\Schema(type="integer")),
+     *   @OA\Response(
+     *     response=200,
+     *     description="OK",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="success", type="boolean", example=true),
+     *       @OA\Property(property="message", type="string", example="OK"),
+     *       @OA\Property(property="data", type="object",
+     *         example={"id":10,"title":"Nettoyage de bureaux","status":"active","price_amount":25000,"currency":"XAF"}
+     *       )
+     *     )
+     *   ),
+     *   @OA\Response(response=404, description="Not Found")
+     * )
      */
     public function show(ServiceOffering $serviceOffering)
     {
@@ -112,25 +161,64 @@ class ServiceOfferingController extends Controller
     }
 
     /**
-     * POST /api/service-offerings
-     * Création
+     * @OA\Post(
+     *   path="/api/service-offerings",
+     *   tags={"ServiceOfferings"},
+     *   summary="Créer un service",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\RequestBody(
+     *     required=true,
+     *     @OA\JsonContent(
+     *       type="object",
+     *       required={"sub_category_id","title","price_amount"},
+     *       @OA\Property(property="sub_category_id", type="integer", example=3),
+     *       @OA\Property(property="provider_id", type="integer", nullable=true, example=42),
+     *       @OA\Property(property="title", type="string", example="Nettoyage de bureaux"),
+     *       @OA\Property(property="description", type="string", nullable=true),
+     *       @OA\Property(property="price_amount", type="number", format="float", example=25000),
+     *       @OA\Property(property="price_unit", type="string", nullable=true, enum={"hour","service","km","course","kg","jour"}),
+     *       @OA\Property(property="currency", type="string", example="XAF"),
+     *       @OA\Property(property="city", type="string", nullable=true, example="Douala"),
+     *       @OA\Property(property="country", type="string", nullable=true, example="CM"),
+     *       @OA\Property(property="address", type="string", nullable=true),
+     *       @OA\Property(property="coverage_km", type="integer", nullable=true, example=10),
+     *       @OA\Property(property="on_site", type="boolean", nullable=true),
+     *       @OA\Property(property="at_provider", type="boolean", nullable=true),
+     *       @OA\Property(property="lat", type="number", format="float", nullable=true),
+     *       @OA\Property(property="lng", type="number", format="float", nullable=true),
+     *       @OA\Property(property="status", type="string", nullable=true, enum={"draft","active","paused","archived"}),
+     *       @OA\Property(property="attachments", type="array", @OA\Items(type="string"))
+     *     )
+     *   ),
+     *   @OA\Response(
+     *     response=201,
+     *     description="Créé",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="success", type="boolean", example=true),
+     *       @OA\Property(property="message", type="string", example="Service créé"),
+     *       @OA\Property(property="data", type="object",
+     *         example={"id":11,"title":"Nettoyage de bureaux","status":"draft"}
+     *       )
+     *     )
+     *   ),
+     *   @OA\Response(response=401, description="Unauthenticated"),
+     *   @OA\Response(response=422, description="Validation error")
+     * )
      */
     public function store(Request $req)
     {
         $validated = $this->validatePayload($req);
 
-        // owner = provider authentifié (ou via payload si admin)
         $user = $req->user();
         if (!$user) {
             return response()->error("Non autorisé", null, 401);
         }
 
-        // Si tu as des rôles/admin, ajuste ici la logique (ex: un admin peut définir provider_id)
         if (!isset($validated['provider_id'])) {
             $validated['provider_id'] = $user->id;
         }
 
-        // Defaults safe
         $validated['status']       = $validated['status'] ?? 'draft';
         $validated['published_at'] = $validated['status'] === 'active' ? now() : null;
 
@@ -140,15 +228,42 @@ class ServiceOfferingController extends Controller
     }
 
     /**
-     * PUT/PATCH /api/service-offerings/{serviceOffering}
-     * Mise à jour
+     * @OA\Patch(
+     *   path="/api/service-offerings/{serviceOffering}",
+     *   tags={"ServiceOfferings"},
+     *   summary="Mettre à jour un service",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="serviceOffering", in="path", required=true, @OA\Schema(type="integer")),
+     *   @OA\RequestBody(
+     *     required=true,
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="sub_category_id", type="integer", example=3),
+     *       @OA\Property(property="provider_id", type="integer", example=42),
+     *       @OA\Property(property="title", type="string", example="Titre modifié"),
+     *       @OA\Property(property="description", type="string", nullable=true),
+     *       @OA\Property(property="price_amount", type="number", format="float", example=30000),
+     *       @OA\Property(property="status", type="string", enum={"draft","active","paused","archived"}),
+     *       @OA\Property(property="featured", type="boolean", nullable=true),
+     *       @OA\Property(property="attachments", type="array", @OA\Items(type="string"))
+     *     )
+     *   ),
+     *   @OA\Response(response=200, description="OK")
+     * )
+     * @OA\Put(
+     *   path="/api/service-offerings/{serviceOffering}",
+     *   tags={"ServiceOfferings"},
+     *   summary="Mettre à jour un service (PUT)",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="serviceOffering", in="path", required=true, @OA\Schema(type="integer")),
+     *   @OA\RequestBody(required=true, @OA\JsonContent(type="object")),
+     *   @OA\Response(response=200, description="OK")
+     * )
      */
     public function update(Request $req, ServiceOffering $serviceOffering)
     {
-        // Optionnel: Gate/policy (ex: $this->authorize('update', $serviceOffering);)
         $validated = $this->validatePayload($req, updating: true);
 
-        // Empêche collisions de contrainte unique (provider_id, sub_category_id, title)
         if (isset($validated['title']) || isset($validated['provider_id']) || isset($validated['sub_category_id'])) {
             $exists = ServiceOffering::query()
                 ->where('id', '!=', $serviceOffering->id)
@@ -162,17 +277,15 @@ class ServiceOfferingController extends Controller
         }
 
         DB::transaction(function () use ($serviceOffering, $validated) {
-            // Publication auto si status -> active
             if (isset($validated['status'])) {
                 if ($validated['status'] === 'active' && is_null($serviceOffering->published_at)) {
                     $validated['published_at'] = now();
                     $validated['status_reason'] = null;
                 }
                 if (in_array($validated['status'], ['paused','archived'], true)) {
-                    $validated['featured'] = false; // on enlève la mise en avant si pause/archivage
+                    $validated['featured'] = false;
                 }
             }
-
             $serviceOffering->update($validated);
         });
 
@@ -180,8 +293,16 @@ class ServiceOfferingController extends Controller
     }
 
     /**
-     * DELETE /api/service-offerings/{serviceOffering}
-     * Suppression (soft delete)
+     * @OA\Delete(
+     *   path="/api/service-offerings/{serviceOffering}",
+     *   tags={"ServiceOfferings"},
+     *   summary="Supprimer un service",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="serviceOffering", in="path", required=true, @OA\Schema(type="integer")),
+     *   @OA\Response(response=200, description="Supprimé"),
+     *   @OA\Response(response=401, description="Unauthenticated"),
+     *   @OA\Response(response=404, description="Not Found")
+     * )
      */
     public function destroy(ServiceOffering $serviceOffering)
     {
@@ -190,8 +311,14 @@ class ServiceOfferingController extends Controller
     }
 
     /**
-     * POST /api/service-offerings/{serviceOffering}/publish
-     * Publication (active)
+     * @OA\Post(
+     *   path="/api/service-offerings/{serviceOffering}/publish",
+     *   tags={"ServiceOfferings"},
+     *   summary="Publier un service",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="serviceOffering", in="path", required=true, @OA\Schema(type="integer")),
+     *   @OA\Response(response=200, description="Publié")
+     * )
      */
     public function publish(ServiceOffering $serviceOffering, Request $req)
     {
@@ -205,7 +332,15 @@ class ServiceOfferingController extends Controller
     }
 
     /**
-     * POST /api/service-offerings/{serviceOffering}/pause
+     * @OA\Post(
+     *   path="/api/service-offerings/{serviceOffering}/pause",
+     *   tags={"ServiceOfferings"},
+     *   summary="Mettre en pause un service",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="serviceOffering", in="path", required=true, @OA\Schema(type="integer")),
+     *   @OA\RequestBody(@OA\JsonContent(type="object", @OA\Property(property="reason", type="string", nullable=true))),
+     *   @OA\Response(response=200, description="Mis en pause")
+     * )
      */
     public function pause(ServiceOffering $serviceOffering, Request $req)
     {
@@ -219,7 +354,15 @@ class ServiceOfferingController extends Controller
     }
 
     /**
-     * POST /api/service-offerings/{serviceOffering}/archive
+     * @OA\Post(
+     *   path="/api/service-offerings/{serviceOffering}/archive",
+     *   tags={"ServiceOfferings"},
+     *   summary="Archiver un service",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="serviceOffering", in="path", required=true, @OA\Schema(type="integer")),
+     *   @OA\RequestBody(@OA\JsonContent(type="object", @OA\Property(property="reason", type="string", nullable=true))),
+     *   @OA\Response(response=200, description="Archivé")
+     * )
      */
     public function archive(ServiceOffering $serviceOffering, Request $req)
     {
@@ -233,14 +376,24 @@ class ServiceOfferingController extends Controller
     }
 
     /**
-     * POST /api/service-offerings/{serviceOffering}/feature
-     * Toggle mise en avant
+     * @OA\Post(
+     *   path="/api/service-offerings/{serviceOffering}/feature",
+     *   tags={"ServiceOfferings"},
+     *   summary="Basculer la mise en avant",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="serviceOffering", in="path", required=true, @OA\Schema(type="integer")),
+     *   @OA\RequestBody(
+     *     @OA\JsonContent(type="object",
+     *       @OA\Property(property="featured", type="boolean", example=true)
+     *     )
+     *   ),
+     *   @OA\Response(response=200, description="OK")
+     * )
      */
     public function feature(ServiceOffering $serviceOffering, Request $req)
     {
         $featured = (bool) $req->input('featured', true);
 
-        // Optionnel: n’autoriser que si status actif
         if ($featured && $serviceOffering->status !== 'active') {
             return response()->error("Le service doit être 'active' pour être mis en avant.", null, 422);
         }
@@ -251,8 +404,20 @@ class ServiceOfferingController extends Controller
     }
 
     /**
-     * POST /api/service-offerings/{serviceOffering}/verify
-     * Vérification KYC / interne
+     * @OA\Post(
+     *   path="/api/service-offerings/{serviceOffering}/verify",
+     *   tags={"ServiceOfferings"},
+     *   summary="Vérifier / dévérifier un service",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="serviceOffering", in="path", required=true, @OA\Schema(type="integer")),
+     *   @OA\RequestBody(
+     *     @OA\JsonContent(type="object",
+     *       @OA\Property(property="is_verified", type="boolean", example=true),
+     *       @OA\Property(property="reason", type="string", nullable=true)
+     *     )
+     *   ),
+     *   @OA\Response(response=200, description="OK")
+     * )
      */
     public function verify(ServiceOffering $serviceOffering, Request $req)
     {
@@ -266,8 +431,21 @@ class ServiceOfferingController extends Controller
     }
 
     /**
-     * POST /api/service-offerings/{serviceOffering}/attachments
-     * Ajout / remplace la liste des pièces jointes (array de strings/URLs)
+     * @OA\Post(
+     *   path="/api/service-offerings/{serviceOffering}/attachments",
+     *   tags={"ServiceOfferings"},
+     *   summary="Mettre à jour les pièces jointes",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="serviceOffering", in="path", required=true, @OA\Schema(type="integer")),
+     *   @OA\RequestBody(
+     *     required=true,
+     *     @OA\JsonContent(type="object",
+     *       required={"attachments"},
+     *       @OA\Property(property="attachments", type="array", @OA\Items(type="string"))
+     *     )
+     *   ),
+     *   @OA\Response(response=200, description="OK")
+     * )
      */
     public function saveAttachments(ServiceOffering $serviceOffering, Request $req)
     {
@@ -282,15 +460,37 @@ class ServiceOfferingController extends Controller
     }
 
     /**
-     * GET /api/service-offerings/{serviceOffering}/availability
-     * Liste des créneaux de disponibilité du service (futurs)
-     * Query params: from, to (YYYY-MM-DD), status, limit
+     * @OA\Get(
+     *   path="/api/service-offerings/{serviceOffering}/availability",
+     *   tags={"ServiceOfferings"},
+     *   summary="Disponibilités d'un service",
+     *   description="Retourne les créneaux entre 'from' et 'to' (YYYY-MM-DD).",
+     *   @OA\Parameter(name="serviceOffering", in="path", required=true, @OA\Schema(type="integer")),
+     *   @OA\Parameter(name="from", in="query", @OA\Schema(type="string", format="date")),
+     *   @OA\Parameter(name="to", in="query", @OA\Schema(type="string", format="date")),
+     *   @OA\Parameter(name="status", in="query", @OA\Schema(type="string", enum={"available","full","blocked","cancelled"})),
+     *   @OA\Parameter(name="limit", in="query", @OA\Schema(type="integer", minimum=1, maximum=500)),
+     *   @OA\Response(
+     *     response=200,
+     *     description="OK",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="success", type="boolean", example=true),
+     *       @OA\Property(property="message", type="string", example="OK"),
+     *       @OA\Property(property="data", type="array",
+     *         @OA\Items(type="object",
+     *           example={"id":99,"service_offering_id":10,"start_at":"2025-08-20 09:00:00","end_at":"2025-08-20 10:00:00","status":"available"}
+     *         )
+     *       )
+     *     )
+     *   )
+     * )
      */
     public function availability(ServiceOffering $serviceOffering, Request $req)
     {
         $from = $req->date('from', now());
         $to   = $req->date('to', now()->copy()->addWeeks(2));
-        $status = $req->input('status'); // available|full|blocked|cancelled
+        $status = $req->input('status');
         $limit  = min((int) $req->input('limit', 100), 500);
 
         $slots = AvailabilitySlot::query()
@@ -305,8 +505,13 @@ class ServiceOfferingController extends Controller
     }
 
     /**
-     * POST /api/service-offerings/{serviceOffering}/increment-views
-     * Incrémente le compteur de vues (sans auth)
+     * @OA\Post(
+     *   path="/api/service-offerings/{serviceOffering}/increment-views",
+     *   tags={"ServiceOfferings"},
+     *   summary="Incrémenter le compteur de vues",
+     *   @OA\Parameter(name="serviceOffering", in="path", required=true, @OA\Schema(type="integer")),
+     *   @OA\Response(response=200, description="OK")
+     * )
      */
     public function incrementViews(ServiceOffering $serviceOffering)
     {
@@ -315,8 +520,14 @@ class ServiceOfferingController extends Controller
     }
 
     /**
-     * POST /api/service-offerings/{serviceOffering}/recompute-stats
-     * Recalcule avg_rating & ratings_count depuis reviews
+     * @OA\Post(
+     *   path="/api/service-offerings/{serviceOffering}/recompute-stats",
+     *   tags={"ServiceOfferings"},
+     *   summary="Recalculer les statistiques (notes)",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="serviceOffering", in="path", required=true, @OA\Schema(type="integer")),
+     *   @OA\Response(response=200, description="OK")
+     * )
      */
     public function recomputeStats(ServiceOffering $serviceOffering)
     {
@@ -335,7 +546,7 @@ class ServiceOfferingController extends Controller
     }
 
     /**
-     * Validation centralisée
+     * Validation centralisée (non exposée Swagger)
      */
     private function validatePayload(Request $req, bool $updating = false): array
     {
@@ -383,8 +594,6 @@ class ServiceOfferingController extends Controller
         ];
 
         $validated = $req->validate($rules);
-
-        // Si metadata/attachments sont arrays, Laravel les persiste en JSON via $casts (voir modèle)
         return $validated;
     }
 }

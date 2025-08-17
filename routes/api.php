@@ -1,8 +1,14 @@
 <?php
 
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AvailabilitySlotController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\CommissionController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ServiceOfferingController;
 use App\Http\Controllers\SubCategoryController;
+use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Dingo\Api\Routing\Router;
@@ -32,6 +38,10 @@ $api->version('v1', function (Router $api) {
         $api->post('refresh', 'App\Http\Controllers\AuthController@refresh');
     });
 
+    Route::prefix('auth')->group(function () {
+        Route::post('/logout', [AuthController::class, 'logout']);
+    });
+
     Route::prefix('users')->group(function () {
         Route::get('/',           [UserController::class, 'index']);
         Route::get('/me',         [UserController::class, 'me']);
@@ -54,18 +64,22 @@ $api->version('v1', function (Router $api) {
         Route::post('/{user}/subscription/revoke', [UserController::class, 'revokeSubscription']);
     });
 
-    Route::prefix('catalogue')->group(function () {
+    Route::prefix('categories')->group(function () {
         // --- Categories
-        Route::get('/categories', [CategoryController::class, 'index']); // tu peux aussi faire ceci: GET /api/categories?search=Beauté
-        Route::get('/categories/{category}', [CategoryController::class, 'show']); // {category} = slug
-        Route::get('/categories/{category}/subcategories', [CategoryController::class, 'subcategories']); // liste des subcats d'une catégorie
-        Route::post('/categories', [CategoryController::class, 'store']);
-        Route::put('/categories/{category}', [CategoryController::class, 'update']);
+        Route::get('/', [CategoryController::class, 'index']); // tu peux aussi faire ceci: GET /api/categories?search=Beauté
+        Route::get('/{category}', [CategoryController::class, 'show']); // {category} = slug
+        Route::get('/{category}/subcategories', [CategoryController::class, 'subcategories']); // liste des subcats d'une catégorie
+        Route::post('/', [CategoryController::class, 'store']);
+        Route::put('/{category}', [CategoryController::class, 'update']);
 
-        // --- SubCategories
-        Route::get('/subcategories', [SubCategoryController::class, 'index']);
-        Route::get('/subcategories/{subCategory}', [SubCategoryController::class, 'show']); // {subCategory} = slug
+    });
 
+    Route::prefix('subcategories')->group(function () {
+        Route::get('/', [SubCategoryController::class, 'index']); // GET /api/subcategories?search=...
+        Route::get('/{subCategory}', [SubCategoryController::class, 'show']); // {subCategory} = slug ou id
+        Route::post('/', [SubCategoryController::class, 'store']); // POST /api/subcategories
+        Route::put('/{subCategory}', [SubCategoryController::class, 'update']); // PUT /api/subcategories/{slug}
+        Route::patch('/{subCategory}', [SubCategoryController::class, 'update']); // PATCH aussi
     });
 
 
@@ -109,5 +123,87 @@ $api->version('v1', function (Router $api) {
         Route::post('/{booking}/payment-status', [BookingController::class, 'setPaymentStatus']);
         Route::post('/{booking}/recompute',      [BookingController::class, 'recompute']);
     });
+
+    // Bloc /api/payments
+    Route::prefix('payments')->group(function () {
+        // CRUD principal
+        Route::get('/', [PaymentController::class, 'index'])->name('payments.index');
+        Route::get('/{payment}', [PaymentController::class, 'show'])->name('payments.show');
+        Route::post('/', [PaymentController::class, 'store'])->name('payments.store');
+        Route::match(['put','patch'], '/{payment}', [PaymentController::class, 'update'])->name('payments.update');
+        Route::delete('/{payment}', [PaymentController::class, 'destroy'])->name('payments.destroy');
+
+        // Actions métier
+        Route::post('/{payment}/authorize', [PaymentController::class, 'authorizePayment'])->name('payments.authorize');
+        Route::post('/{payment}/capture',   [PaymentController::class, 'capture'])->name('payments.capture');
+        Route::post('/{payment}/fail',      [PaymentController::class, 'fail'])->name('payments.fail');
+        Route::post('/{payment}/refund',    [PaymentController::class, 'refund'])->name('payments.refund');
+        Route::post('/{payment}/recompute-net', [PaymentController::class, 'recomputeNet'])->name('payments.recompute_net');
+    });
+
+
+    // /api/subscriptions...
+    Route::prefix('subscriptions')->group(function () {
+        Route::get('/',            [SubscriptionController::class, 'index'])->name('subscriptions.index');
+        Route::get('/{subscription}', [SubscriptionController::class, 'show'])->name('subscriptions.show');
+
+        Route::post('/',           [SubscriptionController::class, 'store'])->name('subscriptions.store');
+        Route::match(['put','patch'],'/{subscription}', [SubscriptionController::class, 'update'])->name('subscriptions.update');
+        Route::delete('/{subscription}', [SubscriptionController::class, 'destroy'])->name('subscriptions.destroy');
+
+        // Actions
+        Route::post('/{subscription}/cancel',            [SubscriptionController::class, 'cancel'])->name('subscriptions.cancel');
+        Route::post('/{subscription}/expire',            [SubscriptionController::class, 'expire'])->name('subscriptions.expire');
+        Route::post('/{subscription}/activate',          [SubscriptionController::class, 'activate'])->name('subscriptions.activate');
+        Route::post('/{subscription}/toggle-auto-renew', [SubscriptionController::class, 'toggleAutoRenew'])->name('subscriptions.toggle_auto_renew');
+        Route::post('/{subscription}/compute-commission',[SubscriptionController::class, 'computeCommission'])->name('subscriptions.compute_commission');
+    });
+
+
+
+    Route::prefix('commissions')->group(function () {
+        // CRUD
+        Route::get('/',               [CommissionController::class, 'index'])->name('commissions.index');
+        Route::get('/{commission}',   [CommissionController::class, 'show'])->name('commissions.show');
+        Route::post('/',              [CommissionController::class, 'store'])->name('commissions.store');
+        Route::match(['put','patch'], '/{commission}', [CommissionController::class, 'update'])->name('commissions.update');
+        Route::delete('/{commission}',[CommissionController::class, 'destroy'])->name('commissions.destroy');
+
+        // Actions
+        Route::post('/{commission}/capture',          [CommissionController::class, 'capture'])->name('commissions.capture');
+        Route::post('/{commission}/settle',           [CommissionController::class, 'settle'])->name('commissions.settle');
+        Route::post('/{commission}/refund',           [CommissionController::class, 'refund'])->name('commissions.refund');
+        Route::post('/{commission}/cancel',           [CommissionController::class, 'cancel'])->name('commissions.cancel');
+        Route::post('/{commission}/recompute-amount', [CommissionController::class, 'recomputeAmount'])->name('commissions.recompute_amount');
+    });
+
+
+    Route::prefix('reviews')->group(function () {
+        Route::get('/', [ReviewController::class, 'index'])->name('reviews.index');
+        Route::get('/{review}', [ReviewController::class, 'show'])->name('reviews.show');
+
+        Route::post('/', [ReviewController::class, 'store'])->name('reviews.store');
+        Route::match(['put','patch'], '/{review}', [ReviewController::class, 'update'])->name('reviews.update');
+        Route::delete('/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
+
+        Route::post('/{review}/approve', [ReviewController::class, 'approve'])->name('reviews.approve');
+        Route::post('/{review}/unapprove', [ReviewController::class, 'unapprove'])->name('reviews.unapprove');
+    });
+
+
+    Route::prefix('availability-slots')->group(function () {
+        Route::get('/', [AvailabilitySlotController::class, 'index']);
+        Route::get('/{availabilitySlot}', [AvailabilitySlotController::class, 'show']);
+
+        Route::post('/', [AvailabilitySlotController::class, 'store']);
+        Route::patch('/{availabilitySlot}', [AvailabilitySlotController::class, 'update']);
+        Route::put('/{availabilitySlot}', [AvailabilitySlotController::class, 'update']);
+        Route::delete('/{availabilitySlot}', [AvailabilitySlotController::class, 'destroy']);
+
+        Route::post('/{availabilitySlot}/book', [AvailabilitySlotController::class, 'book']);
+        Route::post('/{availabilitySlot}/unbook', [AvailabilitySlotController::class, 'unbook']);
+        Route::post('/{availabilitySlot}/status', [AvailabilitySlotController::class, 'setStatus']);
+    });
+
 
 });

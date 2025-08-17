@@ -17,6 +17,20 @@ use OpenApi\Annotations as OA;
 
 class UserController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth:api')->only([
+            'store',
+            'update',
+            'destroy',
+            'uploadAvatar',
+            'changePassword',
+            'assignSubscription',
+            'revokeSubscription',
+            'me',
+        ]);
+    }
+
     /**
      * @OA\Get(
      *   path="/api/users",
@@ -53,7 +67,9 @@ class UserController extends Controller
      *             @OA\Property(
      *               property="data",
      *               type="array",
-     *               @OA\Items(ref="#/components/schemas/User")
+     *               @OA\Items(type="object",
+     *                 example={"id":1,"first_name":"Alice","last_name":"Dupont","email":"alice@example.com"}
+     *               )
      *             )
      *           ),
      *           @OA\Property(
@@ -72,7 +88,9 @@ class UserController extends Controller
      *           @OA\Property(
      *             property="data",
      *             type="array",
-     *             @OA\Items(ref="#/components/schemas/User")
+     *             @OA\Items(type="object",
+     *               example={"id":1,"first_name":"Alice","last_name":"Dupont","email":"alice@example.com"}
+     *             )
      *           )
      *         )
      *       }
@@ -174,7 +192,11 @@ class UserController extends Controller
      *       type="object",
      *       @OA\Property(property="success", type="boolean", example=true),
      *       @OA\Property(property="message", type="string", example="Détails complets de l’utilisateur récupérés"),
-     *       @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/User"))
+     *       @OA\Property(property="data", type="array",
+     *         @OA\Items(type="object",
+     *           example={"id":1,"first_name":"Alice","last_name":"Dupont","email":"alice@example.com"}
+     *         )
+     *       )
      *     )
      *   ),
      *   @OA\Response(response=401, description="Unauthenticated"),
@@ -197,7 +219,39 @@ class UserController extends Controller
      *   tags={"Users"},
      *   summary="Créer un utilisateur",
      *   security={{"bearerAuth":{}}},
-     *   @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/UserStoreRequest")),
+     *   @OA\RequestBody(
+     *     required=true,
+     *     @OA\JsonContent(
+     *       type="object",
+     *       required={"first_name","last_name","email","password","account_type","role_id"},
+     *       @OA\Property(property="first_name", type="string", maxLength=255, example="Alice"),
+     *       @OA\Property(property="last_name", type="string", maxLength=255, example="Dupont"),
+     *       @OA\Property(property="email", type="string", format="email", example="alice@example.com"),
+     *       @OA\Property(property="password", type="string", minLength=6, example="secret123"),
+     *       @OA\Property(property="phone", type="string", nullable=true, example="+237670000000"),
+     *       @OA\Property(property="preferred_language", type="string", nullable=true, example="fr"),
+     *       @OA\Property(property="country", type="string", maxLength=2, nullable=true, example="CM"),
+     *       @OA\Property(property="account_type", type="string", enum={"entreprise","particulier"}, example="particulier"),
+     *       @OA\Property(property="role_id", type="integer", example=2),
+     *       @OA\Property(property="gender", type="string", enum={"Homme","Femme","Autre"}, nullable=true),
+     *       @OA\Property(property="birthdate", type="string", format="date", nullable=true, example="1990-05-21"),
+     *       @OA\Property(property="job", type="string", nullable=true, example="Ingénieur"),
+     *       @OA\Property(property="personal_address", type="string", nullable=true, example="Bonamoussadi, Douala"),
+     *       @OA\Property(property="user_type", type="string", enum={"client","prestataire"}, nullable=true),
+     *       @OA\Property(property="company_name", type="string", nullable=true),
+     *       @OA\Property(property="sector", type="string", nullable=true),
+     *       @OA\Property(property="tax_number", type="string", nullable=true),
+     *       @OA\Property(property="website", type="string", nullable=true, example="https://exemple.com"),
+     *       @OA\Property(property="company_logo", type="string", nullable=true),
+     *       @OA\Property(property="company_description", type="string", nullable=true),
+     *       @OA\Property(property="company_address", type="string", nullable=true),
+     *       @OA\Property(property="company_city", type="string", nullable=true),
+     *       @OA\Property(property="company_size", type="string", nullable=true),
+     *       @OA\Property(property="preferred_contact_method", type="string", nullable=true),
+     *       @OA\Property(property="accepts_terms", type="boolean", example=true),
+     *       @OA\Property(property="wants_newsletter", type="boolean", example=false)
+     *     )
+     *   ),
      *   @OA\Response(
      *     response=200,
      *     description="Créé",
@@ -205,7 +259,11 @@ class UserController extends Controller
      *       type="object",
      *       @OA\Property(property="success", type="boolean", example=true),
      *       @OA\Property(property="message", type="string", example="Utilisateur créé avec succès"),
-     *       @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/User"))
+     *       @OA\Property(
+     *         property="data",
+     *         type="array",
+     *         @OA\Items(type="object", example={"id":1,"first_name":"Alice","last_name":"Dupont","email":"alice@example.com"})
+     *       )
      *     )
      *   ),
      *   @OA\Response(response=422, description="Validation error"),
@@ -255,7 +313,38 @@ class UserController extends Controller
      *   summary="Mettre à jour un utilisateur",
      *   security={{"bearerAuth":{}}},
      *   @OA\Parameter(name="user", in="path", required=true, @OA\Schema(type="string")),
-     *   @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/UserUpdateRequest")),
+     *   @OA\RequestBody(
+     *     required=true,
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="first_name", type="string", nullable=true),
+     *       @OA\Property(property="last_name", type="string", nullable=true),
+     *       @OA\Property(property="email", type="string", format="email", nullable=true),
+     *       @OA\Property(property="password", type="string", minLength=6, nullable=true),
+     *       @OA\Property(property="phone", type="string", nullable=true),
+     *       @OA\Property(property="preferred_language", type="string", nullable=true),
+     *       @OA\Property(property="country", type="string", maxLength=2, nullable=true),
+     *       @OA\Property(property="account_type", type="string", enum={"entreprise","particulier"}, nullable=true),
+     *       @OA\Property(property="role_id", type="integer", nullable=true),
+     *       @OA\Property(property="gender", type="string", enum={"Homme","Femme","Autre"}, nullable=true),
+     *       @OA\Property(property="birthdate", type="string", format="date", nullable=true),
+     *       @OA\Property(property="job", type="string", nullable=true),
+     *       @OA\Property(property="personal_address", type="string", nullable=true),
+     *       @OA\Property(property="user_type", type="string", enum={"client","prestataire"}, nullable=true),
+     *       @OA\Property(property="company_name", type="string", nullable=true),
+     *       @OA\Property(property="sector", type="string", nullable=true),
+     *       @OA\Property(property="tax_number", type="string", nullable=true),
+     *       @OA\Property(property="website", type="string", nullable=true),
+     *       @OA\Property(property="company_logo", type="string", nullable=true),
+     *       @OA\Property(property="company_description", type="string", nullable=true),
+     *       @OA\Property(property="company_address", type="string", nullable=true),
+     *       @OA\Property(property="company_city", type="string", nullable=true),
+     *       @OA\Property(property="company_size", type="string", nullable=true),
+     *       @OA\Property(property="preferred_contact_method", type="string", nullable=true),
+     *       @OA\Property(property="accepts_terms", type="boolean", nullable=true),
+     *       @OA\Property(property="wants_newsletter", type="boolean", nullable=true)
+     *     )
+     *   ),
      *   @OA\Response(
      *     response=200,
      *     description="OK",
@@ -263,7 +352,9 @@ class UserController extends Controller
      *       type="object",
      *       @OA\Property(property="success", type="boolean", example=true),
      *       @OA\Property(property="message", type="string", example="Utilisateur mis à jour avec succès"),
-     *       @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/User"))
+     *       @OA\Property(property="data", type="array",
+     *         @OA\Items(type="object", example={"id":1,"first_name":"Alice","last_name":"Dupont","email":"alice@example.com"})
+     *       )
      *     )
      *   ),
      *   @OA\Response(response=422, description="Validation error"),
@@ -276,7 +367,38 @@ class UserController extends Controller
      *   summary="Mettre à jour un utilisateur (PUT)",
      *   security={{"bearerAuth":{}}},
      *   @OA\Parameter(name="user", in="path", required=true, @OA\Schema(type="string")),
-     *   @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/UserUpdateRequest")),
+     *   @OA\RequestBody(
+     *     required=true,
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="first_name", type="string", nullable=true),
+     *       @OA\Property(property="last_name", type="string", nullable=true),
+     *       @OA\Property(property="email", type="string", format="email", nullable=true),
+     *       @OA\Property(property="password", type="string", minLength=6, nullable=true),
+     *       @OA\Property(property="phone", type="string", nullable=true),
+     *       @OA\Property(property="preferred_language", type="string", nullable=true),
+     *       @OA\Property(property="country", type="string", maxLength=2, nullable=true),
+     *       @OA\Property(property="account_type", type="string", enum={"entreprise","particulier"}, nullable=true),
+     *       @OA\Property(property="role_id", type="integer", nullable=true),
+     *       @OA\Property(property="gender", type="string", enum={"Homme","Femme","Autre"}, nullable=true),
+     *       @OA\Property(property="birthdate", type="string", format="date", nullable=true),
+     *       @OA\Property(property="job", type="string", nullable=true),
+     *       @OA\Property(property="personal_address", type="string", nullable=true),
+     *       @OA\Property(property="user_type", type="string", enum={"client","prestataire"}, nullable=true),
+     *       @OA\Property(property="company_name", type="string", nullable=true),
+     *       @OA\Property(property="sector", type="string", nullable=true),
+     *       @OA\Property(property="tax_number", type="string", nullable=true),
+     *       @OA\Property(property="website", type="string", nullable=true),
+     *       @OA\Property(property="company_logo", type="string", nullable=true),
+     *       @OA\Property(property="company_description", type="string", nullable=true),
+     *       @OA\Property(property="company_address", type="string", nullable=true),
+     *       @OA\Property(property="company_city", type="string", nullable=true),
+     *       @OA\Property(property="company_size", type="string", nullable=true),
+     *       @OA\Property(property="preferred_contact_method", type="string", nullable=true),
+     *       @OA\Property(property="accepts_terms", type="boolean", nullable=true),
+     *       @OA\Property(property="wants_newsletter", type="boolean", nullable=true)
+     *     )
+     *   ),
      *   @OA\Response(
      *     response=200,
      *     description="OK",
@@ -284,7 +406,9 @@ class UserController extends Controller
      *       type="object",
      *       @OA\Property(property="success", type="boolean", example=true),
      *       @OA\Property(property="message", type="string", example="Utilisateur mis à jour avec succès"),
-     *       @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/User"))
+     *       @OA\Property(property="data", type="array",
+     *         @OA\Items(type="object", example={"id":1,"first_name":"Alice","last_name":"Dupont","email":"alice@example.com"})
+     *       )
      *     )
      *   ),
      *   @OA\Response(response=422, description="Validation error"),
@@ -383,7 +507,9 @@ class UserController extends Controller
      *         @OA\Property(
      *           property="data",
      *           type="array",
-     *           @OA\Items(ref="#/components/schemas/Booking")
+     *           @OA\Items(type="object",
+     *             example={"id":10,"status":"confirmed","payment_status":"paid","start_at":"2025-08-10 10:00:00"}
+     *           )
      *         ),
      *         @OA\Property(property="current_page", type="integer", example=1),
      *         @OA\Property(property="per_page", type="integer", example=15),
@@ -445,7 +571,9 @@ class UserController extends Controller
      *         @OA\Property(
      *           property="data",
      *           type="array",
-     *           @OA\Items(ref="#/components/schemas/ServiceOffering")
+     *           @OA\Items(type="object",
+     *             example={"id":5,"title":"Nettoyage industriel","status":"published","city":"Douala"}
+     *           )
      *         ),
      *         @OA\Property(property="current_page", type="integer", example=1),
      *         @OA\Property(property="per_page", type="integer", example=15),
@@ -502,7 +630,9 @@ class UserController extends Controller
      *         @OA\Property(
      *           property="data",
      *           type="array",
-     *           @OA\Items(ref="#/components/schemas/Review")
+     *           @OA\Items(type="object",
+     *             example={"id":3,"rating":4.5,"comment":"Très pro","provider_id":2,"author_id":5}
+     *           )
      *         ),
      *         @OA\Property(property="current_page", type="integer", example=1),
      *         @OA\Property(property="per_page", type="integer", example=15),
@@ -562,7 +692,9 @@ class UserController extends Controller
      *         @OA\Property(
      *           property="data",
      *           type="array",
-     *           @OA\Items(ref="#/components/schemas/AvailabilitySlot")
+     *           @OA\Items(type="object",
+     *             example={"id":9,"provider_id":2,"start_at":"2025-08-20 09:00:00","end_at":"2025-08-20 12:00:00"}
+     *           )
      *         ),
      *         @OA\Property(property="current_page", type="integer", example=1),
      *         @OA\Property(property="per_page", type="integer", example=50),
@@ -619,7 +751,9 @@ class UserController extends Controller
      *       type="object",
      *       @OA\Property(property="success", type="boolean", example=true),
      *       @OA\Property(property="message", type="string", example="Avatar mis à jour"),
-     *       @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/User"))
+     *       @OA\Property(property="data", type="array",
+     *         @OA\Items(type="object", example={"id":1,"profile_photo":"avatars/abc.jpg"})
+     *       )
      *     )
      *   ),
      *   @OA\Response(response=422, description="Validation error"),
@@ -654,7 +788,16 @@ class UserController extends Controller
      *   summary="Changer le mot de passe d'un utilisateur",
      *   security={{"bearerAuth":{}}},
      *   @OA\Parameter(name="user", in="path", required=true, @OA\Schema(type="string")),
-     *   @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/ChangePasswordRequest")),
+     *   @OA\RequestBody(
+     *     required=true,
+     *     @OA\JsonContent(
+     *       type="object",
+     *       required={"current_password","new_password"},
+     *       @OA\Property(property="current_password", type="string", example="ancienPass123"),
+     *       @OA\Property(property="new_password", type="string", minLength=6, example="nouveauPass123"),
+     *       @OA\Property(property="new_password_confirmation", type="string", example="nouveauPass123")
+     *     )
+     *   ),
      *   @OA\Response(
      *     response=200,
      *     description="OK",
@@ -694,7 +837,20 @@ class UserController extends Controller
      *   summary="Assigner/Créer un abonnement actif pour un utilisateur",
      *   security={{"bearerAuth":{}}},
      *   @OA\Parameter(name="user", in="path", required=true, @OA\Schema(type="string")),
-     *   @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/AssignSubscriptionRequest")),
+     *   @OA\RequestBody(
+     *     required=true,
+     *     @OA\JsonContent(
+     *       type="object",
+     *       required={"name","commission_type","commission_rate"},
+     *       @OA\Property(property="name", type="string", example="Standard"),
+     *       @OA\Property(property="price", type="number", format="float", nullable=true, example=5000),
+     *       @OA\Property(property="frequency", type="string", enum={"month","year"}, nullable=true, example="month"),
+     *       @OA\Property(property="commission_type", type="string", enum={"percent","flat"}, example="percent"),
+     *       @OA\Property(property="commission_rate", type="number", format="float", example=10),
+     *       @OA\Property(property="started_at", type="string", format="date-time", nullable=true, example="2025-08-10T09:00:00Z"),
+     *       @OA\Property(property="ends_at", type="string", format="date-time", nullable=true, example="2026-08-10T09:00:00Z")
+     *     )
+     *   ),
      *   @OA\Response(
      *     response=200,
      *     description="OK",
@@ -702,7 +858,11 @@ class UserController extends Controller
      *       type="object",
      *       @OA\Property(property="success", type="boolean", example=true),
      *       @OA\Property(property="message", type="string", example="Abonnement assigné"),
-     *       @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Subscription"))
+     *       @OA\Property(property="data", type="array",
+     *         @OA\Items(type="object",
+     *           example={"id":1,"name":"Standard","frequency":"month","commission_type":"percent","commission_rate":10,"status":"active"}
+     *         )
+     *       )
      *     )
      *   ),
      *   @OA\Response(response=422, description="Validation error"),
@@ -789,7 +949,11 @@ class UserController extends Controller
      *       type="object",
      *       @OA\Property(property="success", type="boolean", example=true),
      *       @OA\Property(property="message", type="string", example="Profil courant"),
-     *       @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/User"))
+     *       @OA\Property(property="data", type="array",
+     *         @OA\Items(type="object",
+     *           example={"id":1,"first_name":"Alice","last_name":"Dupont","email":"alice@example.com"}
+     *         )
+     *       )
      *     )
      *   ),
      *   @OA\Response(response=401, description="Unauthenticated")
@@ -860,7 +1024,7 @@ class UserController extends Controller
      *       )
      *     )
      *   ),
-     *   @OA\Response(response=401, ref="#/components/responses/Unauthorized")
+     *   @OA\Response(response=401, description="Unauthenticated")
      * )
      */
     public function roles()

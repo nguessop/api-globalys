@@ -22,7 +22,6 @@ use OpenApi\Annotations as OA;
  *       scheme="bearer",
  *       bearerFormat="JWT"
  *     ),
- *
  *     @OA\Response(
  *       response="Unauthorized",
  *       description="Unauthenticated"
@@ -50,153 +49,100 @@ use OpenApi\Annotations as OA;
  *     ),
  *
  *     @OA\Schema(
- *       schema="Subscription",
+ *       schema="Category",
  *       type="object",
- *       @OA\Property(property="id", type="integer", example=5),
- *       @OA\Property(property="user_id", type="integer", example=12),
- *       @OA\Property(property="name", type="string", example="Gold"),
- *       @OA\Property(property="price", type="number", format="float", nullable=true, example=29.99),
- *       @OA\Property(property="frequency", type="string", enum={"month","year"}, example="month"),
- *       @OA\Property(property="commission_type", type="string", enum={"percent","flat"}, example="percent"),
- *       @OA\Property(property="commission_rate", type="number", format="float", example=10),
- *       @OA\Property(property="status", type="string", example="active"),
- *       @OA\Property(property="started_at", type="string", format="date-time"),
- *       @OA\Property(property="ends_at", type="string", format="date-time", nullable=true)
+ *       @OA\Property(property="id", type="integer", example=3),
+ *       @OA\Property(property="slug", type="string", example="nettoyage"),
+ *       @OA\Property(property="name", type="string", example="Nettoyage"),
+ *       @OA\Property(property="icon", type="string", example="broom"),
+ *       @OA\Property(property="color_class", type="string", example="bg-indigo-600"),
+ *       @OA\Property(property="description", type="string", example="Services de nettoyage divers"),
+ *       @OA\Property(property="subCategories", type="array", @OA\Items(ref="#/components/schemas/SubCategory"))
  *     ),
  *
  *     @OA\Schema(
- *       schema="Booking",
+ *       schema="SubCategory",
  *       type="object",
  *       @OA\Property(property="id", type="integer"),
- *       @OA\Property(property="client_id", type="integer"),
- *       @OA\Property(property="provider_id", type="integer"),
- *       @OA\Property(property="service_offering_id", type="integer"),
- *       @OA\Property(property="status", type="string"),
- *       @OA\Property(property="payment_status", type="string"),
- *       @OA\Property(property="start_at", type="string", format="date-time"),
- *       @OA\Property(property="end_at", type="string", format="date-time")
+ *       @OA\Property(property="category_id", type="integer"),
+ *       @OA\Property(property="slug", type="string"),
+ *       @OA\Property(property="name", type="string"),
+ *       @OA\Property(property="icon", type="string", nullable=true)
  *     ),
  *
  *     @OA\Schema(
- *       schema="ServiceOffering",
+ *       schema="CategoryStoreRequest",
  *       type="object",
- *       @OA\Property(property="id", type="integer"),
- *       @OA\Property(property="provider_id", type="integer"),
- *       @OA\Property(property="sub_category_id", type="integer"),
- *       @OA\Property(property="title", type="string"),
- *       @OA\Property(property="city", type="string"),
- *       @OA\Property(property="status", type="string")
+ *       required={"name"},
+ *       @OA\Property(property="name", type="string", example="Nettoyage"),
+ *       @OA\Property(property="slug", type="string", nullable=true),
+ *       @OA\Property(property="icon", type="string", nullable=true),
+ *       @OA\Property(property="color_class", type="string", nullable=true),
+ *       @OA\Property(property="description", type="string", nullable=true)
  *     ),
  *
  *     @OA\Schema(
- *       schema="Review",
+ *       schema="CategoryUpdateRequest",
  *       type="object",
- *       @OA\Property(property="id", type="integer"),
- *       @OA\Property(property="author_id", type="integer"),
- *       @OA\Property(property="provider_id", type="integer"),
- *       @OA\Property(property="booking_id", type="integer"),
- *       @OA\Property(property="rating", type="number", format="float"),
- *       @OA\Property(property="comment", type="string"),
- *       @OA\Property(property="created_at", type="string", format="date-time")
+ *       @OA\Property(property="name", type="string", example="Nettoyage & Entretien"),
+ *       @OA\Property(property="slug", type="string", nullable=true),
+ *       @OA\Property(property="icon", type="string", nullable=true),
+ *       @OA\Property(property="color_class", type="string", nullable=true),
+ *       @OA\Property(property="description", type="string", nullable=true)
  *     ),
  *
- *     @OA\Schema(
- *       schema="AvailabilitySlot",
- *       type="object",
- *       @OA\Property(property="id", type="integer"),
- *       @OA\Property(property="provider_id", type="integer"),
- *       @OA\Property(property="start_at", type="string", format="date-time"),
- *       @OA\Property(property="end_at", type="string", format="date-time")
+ *     @OA\RequestBody(
+ *       request="ReviewStoreRequest",
+ *       required=true,
+ *       @OA\MediaType(
+ *         mediaType="application/json",
+ *         @OA\Schema(
+ *           type="object",
+ *           required={"user_id","provider_id","service_offering_id","booking_id","rating"},
+ *           @OA\Property(property="user_id", type="integer", example=25),
+ *           @OA\Property(property="provider_id", type="integer", example=7),
+ *           @OA\Property(property="service_offering_id", type="integer", example=12),
+ *           @OA\Property(property="booking_id", type="integer", example=130),
+ *           @OA\Property(property="rating", type="integer", minimum=1, maximum=5, example=5),
+ *           @OA\Property(property="comment", type="string", nullable=true, example="Excellent service !"),
+ *           @OA\Property(property="is_approved", type="boolean", nullable=true, example=false)
+ *         )
+ *       )
  *     ),
  *
- *     @OA\Schema(
- *       schema="UserStoreRequest",
- *       type="object",
- *       required={"first_name","last_name","email","password","account_type","role_id"},
- *       @OA\Property(property="first_name", type="string"),
- *       @OA\Property(property="last_name", type="string"),
- *       @OA\Property(property="email", type="string", format="email"),
- *       @OA\Property(property="password", type="string", format="password", minLength=6),
- *       @OA\Property(property="phone", type="string"),
- *       @OA\Property(property="preferred_language", type="string"),
- *       @OA\Property(property="country", type="string", maxLength=2),
- *       @OA\Property(property="account_type", type="string", enum={"entreprise","particulier"}),
- *       @OA\Property(property="role_id", type="integer"),
- *       @OA\Property(property="gender", type="string", enum={"Homme","Femme","Autre"}, nullable=true),
- *       @OA\Property(property="birthdate", type="string", format="date", nullable=true),
- *       @OA\Property(property="job", type="string", nullable=true),
- *       @OA\Property(property="personal_address", type="string", nullable=true),
- *       @OA\Property(property="user_type", type="string", enum={"client","prestataire"}, nullable=true),
- *       @OA\Property(property="company_name", type="string", nullable=true),
- *       @OA\Property(property="sector", type="string", nullable=true),
- *       @OA\Property(property="tax_number", type="string", nullable=true),
- *       @OA\Property(property="website", type="string", nullable=true),
- *       @OA\Property(property="company_logo", type="string", nullable=true),
- *       @OA\Property(property="company_description", type="string", nullable=true),
- *       @OA\Property(property="company_address", type="string", nullable=true),
- *       @OA\Property(property="company_city", type="string", nullable=true),
- *       @OA\Property(property="company_size", type="string", nullable=true),
- *       @OA\Property(property="preferred_contact_method", type="string", nullable=true),
- *       @OA\Property(property="accepts_terms", type="boolean"),
- *       @OA\Property(property="wants_newsletter", type="boolean")
+ *     @OA\RequestBody(
+ *       request="ReviewUpdateRequest",
+ *       required=true,
+ *       @OA\MediaType(
+ *         mediaType="application/json",
+ *         @OA\Schema(
+ *           type="object",
+ *           @OA\Property(property="user_id", type="integer", nullable=true),
+ *           @OA\Property(property="provider_id", type="integer", nullable=true),
+ *           @OA\Property(property="service_offering_id", type="integer", nullable=true),
+ *           @OA\Property(property="booking_id", type="integer", nullable=true),
+ *           @OA\Property(property="rating", type="integer", minimum=1, maximum=5, nullable=true),
+ *           @OA\Property(property="comment", type="string", nullable=true),
+ *           @OA\Property(property="is_approved", type="boolean", nullable=true)
+ *         )
+ *       )
  *     ),
  *
- *     @OA\Schema(
- *       schema="UserUpdateRequest",
- *       type="object",
- *       @OA\Property(property="first_name", type="string"),
- *       @OA\Property(property="last_name", type="string"),
- *       @OA\Property(property="email", type="string", format="email"),
- *       @OA\Property(property="password", type="string", minLength=6, nullable=true),
- *       @OA\Property(property="phone", type="string"),
- *       @OA\Property(property="preferred_language", type="string"),
- *       @OA\Property(property="country", type="string", maxLength=2),
- *       @OA\Property(property="account_type", type="string", enum={"entreprise","particulier"}),
- *       @OA\Property(property="role_id", type="integer"),
- *       @OA\Property(property="gender", type="string", enum={"Homme","Femme","Autre"}, nullable=true),
- *       @OA\Property(property="birthdate", type="string", format="date", nullable=true),
- *       @OA\Property(property="job", type="string", nullable=true),
- *       @OA\Property(property="personal_address", type="string", nullable=true),
- *       @OA\Property(property="user_type", type="string", enum={"client","prestataire"}, nullable=true),
- *       @OA\Property(property="company_name", type="string", nullable=true),
- *       @OA\Property(property="sector", type="string", nullable=true),
- *       @OA\Property(property="tax_number", type="string", nullable=true),
- *       @OA\Property(property="website", type="string", nullable=true),
- *       @OA\Property(property="company_logo", type="string", nullable=true),
- *       @OA\Property(property="company_description", type="string", nullable=true),
- *       @OA\Property(property="company_address", type="string", nullable=true),
- *       @OA\Property(property="company_city", type="string", nullable=true),
- *       @OA\Property(property="company_size", type="string", nullable=true),
- *       @OA\Property(property="preferred_contact_method", type="string", nullable=true),
- *       @OA\Property(property="accepts_terms", type="boolean"),
- *       @OA\Property(property="wants_newsletter", type="boolean")
- *     ),
- *
- *     @OA\Schema(
- *       schema="ChangePasswordRequest",
- *       type="object",
- *       required={"current_password","new_password","new_password_confirmation"},
- *       @OA\Property(property="current_password", type="string", example="oldPass"),
- *       @OA\Property(property="new_password", type="string", example="NewPass123!"),
- *       @OA\Property(property="new_password_confirmation", type="string", example="NewPass123!")
- *     ),
- *
- *     @OA\Schema(
- *       schema="AssignSubscriptionRequest",
- *       type="object",
- *       required={"name","commission_type","commission_rate"},
- *       @OA\Property(property="name", type="string", example="Gold"),
- *       @OA\Property(property="price", type="number", format="float", example=29.99, nullable=true),
- *       @OA\Property(property="frequency", type="string", enum={"month","year"}, example="month", nullable=true),
- *       @OA\Property(property="commission_type", type="string", enum={"percent","flat"}, example="percent"),
- *       @OA\Property(property="commission_rate", type="number", format="float", example=10),
- *       @OA\Property(property="started_at", type="string", format="date-time", nullable=true),
- *       @OA\Property(property="ends_at", type="string", format="date-time", nullable=true)
+ *     @OA\RequestBody(
+ *       request="ReviewApproveRequest",
+ *       required=false,
+ *       @OA\MediaType(
+ *         mediaType="application/json",
+ *         @OA\Schema(
+ *           type="object",
+ *           @OA\Property(property="approved", type="boolean", nullable=true, example=true)
+ *         )
+ *       )
  *     )
  *   )
  * )
  */
 class OpenApiRoot
 {
-    // Vide : les annotations ci-dessus suffisent.
+    // Vide : uniquement pour contenir les annotations
 }

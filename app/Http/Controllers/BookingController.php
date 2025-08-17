@@ -9,7 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
-use Str;
+use Illuminate\Support\Str;
+use OpenApi\Annotations as OA;
 
 class BookingController extends Controller
 {
@@ -20,8 +21,52 @@ class BookingController extends Controller
     }
 
     /**
-     * GET /api/bookings
-     * Liste + recherche/filtre + tri + pagination
+     * @OA\Get(
+     *   path="/api/bookings",
+     *   tags={"Bookings"},
+     *   summary="Lister les réservations",
+     *   description="Recherche, filtres, tri et pagination.",
+     *   @OA\Parameter(name="status", in="query", @OA\Schema(type="string", enum={"pending","confirmed","in_progress","completed","cancelled"})),
+     *   @OA\Parameter(name="payment_status", in="query", @OA\Schema(type="string", enum={"unpaid","paid","refunded","partial"})),
+     *   @OA\Parameter(name="client_id", in="query", @OA\Schema(type="integer")),
+     *   @OA\Parameter(name="provider_id", in="query", @OA\Schema(type="integer")),
+     *   @OA\Parameter(name="service_offering_id", in="query", @OA\Schema(type="integer")),
+     *   @OA\Parameter(name="from", in="query", description="Date début (YYYY-MM-DD)", @OA\Schema(type="string", format="date")),
+     *   @OA\Parameter(name="to", in="query", description="Date fin (YYYY-MM-DD)", @OA\Schema(type="string", format="date")),
+     *   @OA\Parameter(name="q", in="query", description="Recherche (code, city, address)", @OA\Schema(type="string")),
+     *   @OA\Parameter(name="amount_min", in="query", @OA\Schema(type="number", format="float")),
+     *   @OA\Parameter(name="amount_max", in="query", @OA\Schema(type="number", format="float")),
+     *   @OA\Parameter(name="sort", in="query", description="created_at|start_at|end_at|total_amount|status|payment_status|code", @OA\Schema(type="string")),
+     *   @OA\Parameter(name="dir", in="query", description="asc|desc", @OA\Schema(type="string", enum={"asc","desc"})),
+     *   @OA\Parameter(name="per_page", in="query", @OA\Schema(type="integer", minimum=1, maximum=100)),
+     *   @OA\Response(
+     *     response=200,
+     *     description="OK",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="success", type="boolean", example=true),
+     *       @OA\Property(property="message", type="string", example="OK"),
+     *       @OA\Property(
+     *         property="data",
+     *         type="object",
+     *         @OA\Property(property="current_page", type="integer", example=1),
+     *         @OA\Property(property="per_page", type="integer", example=15),
+     *         @OA\Property(property="total", type="integer", example=120),
+     *         @OA\Property(property="last_page", type="integer", example=8),
+     *         @OA\Property(
+     *           property="data",
+     *           type="array",
+     *           @OA\Items(type="object",
+     *             example={
+     *               "id":101,"code":"BK-ABC123","status":"pending","payment_status":"unpaid",
+     *               "total_amount":45000,"currency":"XAF","start_at":"2025-08-20 09:00:00"
+     *             }
+     *           )
+     *         )
+     *       )
+     *     )
+     *   )
+     * )
      */
     public function index(Request $req)
     {
@@ -97,7 +142,25 @@ class BookingController extends Controller
     }
 
     /**
-     * GET /api/bookings/{booking}
+     * @OA\Get(
+     *   path="/api/bookings/{booking}",
+     *   tags={"Bookings"},
+     *   summary="Détail d'une réservation",
+     *   @OA\Parameter(name="booking", in="path", required=true, @OA\Schema(type="integer")),
+     *   @OA\Response(
+     *     response=200,
+     *     description="OK",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="success", type="boolean", example=true),
+     *       @OA\Property(property="message", type="string", example="OK"),
+     *       @OA\Property(property="data", type="object",
+     *         example={"id":101,"code":"BK-ABC123","status":"confirmed","payment_status":"paid"}
+     *       )
+     *     )
+     *   ),
+     *   @OA\Response(response=404, description="Not Found")
+     * )
      */
     public function show(Booking $booking)
     {
@@ -111,8 +174,45 @@ class BookingController extends Controller
     }
 
     /**
-     * POST /api/bookings
-     * Créer une réservation
+     * @OA\Post(
+     *   path="/api/bookings",
+     *   tags={"Bookings"},
+     *   summary="Créer une réservation",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\RequestBody(
+     *     required=true,
+     *     @OA\JsonContent(
+     *       type="object",
+     *       required={"service_offering_id","client_id","quantity","unit_price"},
+     *       @OA\Property(property="service_offering_id", type="integer", example=10),
+     *       @OA\Property(property="client_id", type="integer", example=25),
+     *       @OA\Property(property="provider_id", type="integer", nullable=true, example=5),
+     *       @OA\Property(property="quantity", type="number", format="float", example=2),
+     *       @OA\Property(property="unit_price", type="number", format="float", example=15000),
+     *       @OA\Property(property="tax_rate", type="number", format="float", example=19.25),
+     *       @OA\Property(property="discount_amount", type="number", format="float", example=0),
+     *       @OA\Property(property="currency", type="string", example="XAF"),
+     *       @OA\Property(property="start_at", type="string", format="date-time", example="2025-08-20 09:00:00"),
+     *       @OA\Property(property="end_at", type="string", format="date-time", example="2025-08-20 10:00:00"),
+     *       @OA\Property(property="city", type="string", example="Douala"),
+     *       @OA\Property(property="address", type="string", example="Bonapriso, Rue X")
+     *     )
+     *   ),
+     *   @OA\Response(
+     *     response=201,
+     *     description="Créé",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="success", type="boolean", example=true),
+     *       @OA\Property(property="message", type="string", example="Réservation créée"),
+     *       @OA\Property(property="data", type="object",
+     *         example={"id":120,"code":"BK-7UQZ9K","status":"pending","payment_status":"unpaid"}
+     *       )
+     *     )
+     *   ),
+     *   @OA\Response(response=401, description="Unauthenticated"),
+     *   @OA\Response(response=422, description="Validation error")
+     * )
      */
     public function store(Request $req)
     {
@@ -141,8 +241,24 @@ class BookingController extends Controller
     }
 
     /**
-     * PUT/PATCH /api/bookings/{booking}
-     * Mettre à jour (recalcule les totaux si prix/quantité/remises changent)
+     * @OA\Patch(
+     *   path="/api/bookings/{booking}",
+     *   tags={"Bookings"},
+     *   summary="Mettre à jour une réservation",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="booking", in="path", required=true, @OA\Schema(type="integer")),
+     *   @OA\RequestBody(required=true, @OA\JsonContent(type="object")),
+     *   @OA\Response(response=200, description="OK")
+     * )
+     * @OA\Put(
+     *   path="/api/bookings/{booking}",
+     *   tags={"Bookings"},
+     *   summary="Mettre à jour une réservation (PUT)",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="booking", in="path", required=true, @OA\Schema(type="integer")),
+     *   @OA\RequestBody(required=true, @OA\JsonContent(type="object")),
+     *   @OA\Response(response=200, description="OK")
+     * )
      */
     public function update(Request $req, Booking $booking)
     {
@@ -151,7 +267,6 @@ class BookingController extends Controller
         // Si des champs financiers changent, on recalcule
         $fieldsAffectTotals = ['quantity','unit_price','subtotal','tax_rate','tax_amount','discount_amount'];
         if (count(array_intersect(array_keys($validated), $fieldsAffectTotals)) > 0) {
-            // On force le recalcul depuis quantity/unit_price/discount/tax_rate
             $payload = array_merge($booking->toArray(), $validated);
             $this->computeTotals($payload);
             $validated['subtotal']        = $payload['subtotal'];
@@ -166,8 +281,16 @@ class BookingController extends Controller
     }
 
     /**
-     * DELETE /api/bookings/{booking}
-     * Suppression soft delete
+     * @OA\Delete(
+     *   path="/api/bookings/{booking}",
+     *   tags={"Bookings"},
+     *   summary="Supprimer une réservation",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="booking", in="path", required=true, @OA\Schema(type="integer")),
+     *   @OA\Response(response=200, description="Supprimé"),
+     *   @OA\Response(response=401, description="Unauthenticated"),
+     *   @OA\Response(response=404, description="Not Found")
+     * )
      */
     public function destroy(Booking $booking)
     {
@@ -176,7 +299,14 @@ class BookingController extends Controller
     }
 
     /**
-     * POST /api/bookings/{booking}/confirm
+     * @OA\Post(
+     *   path="/api/bookings/{booking}/confirm",
+     *   tags={"Bookings"},
+     *   summary="Confirmer une réservation",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="booking", in="path", required=true, @OA\Schema(type="integer")),
+     *   @OA\Response(response=200, description="Confirmée")
+     * )
      */
     public function confirm(Booking $booking)
     {
@@ -190,8 +320,14 @@ class BookingController extends Controller
     }
 
     /**
-     * POST /api/bookings/{booking}/start
-     * (optionnel si tu gères "in_progress")
+     * @OA\Post(
+     *   path="/api/bookings/{booking}/start",
+     *   tags={"Bookings"},
+     *   summary="Démarrer la prestation",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="booking", in="path", required=true, @OA\Schema(type="integer")),
+     *   @OA\Response(response=200, description="Démarrée")
+     * )
      */
     public function start(Booking $booking)
     {
@@ -200,7 +336,14 @@ class BookingController extends Controller
     }
 
     /**
-     * POST /api/bookings/{booking}/complete
+     * @OA\Post(
+     *   path="/api/bookings/{booking}/complete",
+     *   tags={"Bookings"},
+     *   summary="Terminer la prestation",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="booking", in="path", required=true, @OA\Schema(type="integer")),
+     *   @OA\Response(response=200, description="Terminée")
+     * )
      */
     public function complete(Booking $booking)
     {
@@ -209,8 +352,15 @@ class BookingController extends Controller
     }
 
     /**
-     * POST /api/bookings/{booking}/cancel
-     * Body: { "reason": "Client indisponible" }
+     * @OA\Post(
+     *   path="/api/bookings/{booking}/cancel",
+     *   tags={"Bookings"},
+     *   summary="Annuler une réservation",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="booking", in="path", required=true, @OA\Schema(type="integer")),
+     *   @OA\RequestBody(@OA\JsonContent(type="object", @OA\Property(property="reason", type="string", nullable=true))),
+     *   @OA\Response(response=200, description="Annulée")
+     * )
      */
     public function cancel(Booking $booking, Request $req)
     {
@@ -228,8 +378,21 @@ class BookingController extends Controller
     }
 
     /**
-     * POST /api/bookings/{booking}/payment-status
-     * Body: { "payment_status": "paid" }
+     * @OA\Post(
+     *   path="/api/bookings/{booking}/payment-status",
+     *   tags={"Bookings"},
+     *   summary="Modifier le statut de paiement",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="booking", in="path", required=true, @OA\Schema(type="integer")),
+     *   @OA\RequestBody(
+     *     required=true,
+     *     @OA\JsonContent(type="object",
+     *       required={"payment_status"},
+     *       @OA\Property(property="payment_status", type="string", enum={"unpaid","paid","refunded","partial"}, example="paid")
+     *     )
+     *   ),
+     *   @OA\Response(response=200, description="OK")
+     * )
      */
     public function setPaymentStatus(Booking $booking, Request $req)
     {
@@ -242,8 +405,14 @@ class BookingController extends Controller
     }
 
     /**
-     * POST /api/bookings/{booking}/recompute
-     * Recalcule les totaux depuis quantity, unit_price, tax_rate, discount_amount
+     * @OA\Post(
+     *   path="/api/bookings/{booking}/recompute",
+     *   tags={"Bookings"},
+     *   summary="Recalculer les montants",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="booking", in="path", required=true, @OA\Schema(type="integer")),
+     *   @OA\Response(response=200, description="OK")
+     * )
      */
     public function recompute(Booking $booking)
     {
