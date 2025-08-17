@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AvailabilitySlotController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CommissionController;
+use App\Http\Controllers\MetricsController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ServiceOfferingController;
@@ -205,5 +206,8 @@ $api->version('v1', function (Router $api) {
         Route::post('/{availabilitySlot}/status', [AvailabilitySlotController::class, 'setStatus']);
     });
 
+    Route::prefix('metrics')->group(function () {
+        Route::get('/overview', [MetricsController::class, 'overview']); // GET /api/metrics/overview?period=30d
+    });
 
 });

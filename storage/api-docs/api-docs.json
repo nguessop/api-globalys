@@ -2668,6 +2668,39 @@
                 ]
             }
         },
+        "/api/metrics/overview": {
+            "get": {
+                "tags": [
+                    "Metrics"
+                ],
+                "summary": "KPIs pour l'accueil (prestataires, réservations, satisfaction)",
+                "description": "KPIs dynamiques avec valeurs brutes et formatées. Périodes: all (défaut), today, 7d, 30d, 90d, ytd, mtd.",
+                "operationId": "6137ac0b37a655429ef349e0312ba3e6",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "all",
+                                "today",
+                                "7d",
+                                "30d",
+                                "90d",
+                                "mtd",
+                                "ytd"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
         "/api/payments": {
             "get": {
                 "tags": [
@@ -7691,6 +7724,10 @@
         {
             "name": "Commissions",
             "description": "Commissions"
+        },
+        {
+            "name": "Metrics",
+            "description": "Metrics"
         },
         {
             "name": "Payments",
