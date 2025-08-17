@@ -7,7 +7,6 @@ use App\Models\Booking;
 use App\Models\Review;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Carbon\Carbon;
 use OpenApi\Annotations as OA;
 
 class MetricsController extends Controller
@@ -24,24 +23,25 @@ class MetricsController extends Controller
      */
     public function overview(Request $request)
     {
-        // Période
-        [$from, $to, $period] = $this->resolvePeriod($request->string('period')->toString());
+        // Dingo\Request n’a pas ->string(). Utiliser input()/query().
+        $periodParam = $request->query('period', $request->input('period')); // string|null
+        $periodParam = is_string($periodParam) ? $periodParam : null;
 
-        // Cache 5 min pour éviter des COUNT lourds
+        [$from, $to, $period] = $this->resolvePeriod($periodParam);
+
+        // Cache 5 min
         $cacheKey = sprintf('metrics:overview:%s:%s', $period, now()->format('YmdHi'));
+
         $payload = Cache::remember($cacheKey, 300, function () use ($from, $to, $period) {
-            // Prestataires (Users.user_type = 'prestataire')
             $providersCount = User::query()
                 ->where('user_type', 'prestataire')
                 ->when($from && $to, fn($q) => $q->whereBetween('created_at', [$from, $to]))
                 ->count();
 
-            // Réservations (total)
             $bookingsCount = Booking::query()
                 ->when($from && $to, fn($q) => $q->whereBetween('created_at', [$from, $to]))
                 ->count();
 
-            // Satisfaction = % d’avis approuvés avec rating >= 4
             $approved = Review::query()
                 ->where('is_approved', true)
                 ->when($from && $to, fn($q) => $q->whereBetween('created_at', [$from, $to]));
@@ -56,35 +56,32 @@ class MetricsController extends Controller
                 'from'   => $from?->toIso8601String(),
                 'to'     => $to?->toIso8601String(),
                 'raw' => [
-                    'providers_total'        => $providersCount,
-                    'bookings_total'         => $bookingsCount,
-                    'reviews_total'          => $approvedCount,
-                    'avg_rating'             => $avgRating,    // ex: 4.85
-                    'satisfaction_percent'   => $satisfaction, // ex: 99
+                    'providers_total'      => $providersCount,
+                    'bookings_total'       => $bookingsCount,
+                    'reviews_total'        => $approvedCount,
+                    'avg_rating'           => $avgRating,
+                    'satisfaction_percent' => $satisfaction,
                 ],
                 'display' => [
-                    'providers'    => $this->abbrPlus($providersCount),       // ex: "10k+"
-                    'bookings'     => $this->abbrPlus($bookingsCount),        // ex: "50k+"
+                    'providers'    => $this->abbrPlus($providersCount),
+                    'bookings'     => $this->abbrPlus($bookingsCount),
                     'satisfaction' => $satisfaction !== null ? $satisfaction.'%' : '—',
                 ],
             ];
         });
 
-        // Utilise ton helper global; sinon remplace par response()->json($payload)
         return response()->success($payload, 'KPIs');
     }
 
-    /** Convertit 0..∞ vers "10k+" / "50k+" / "999+" selon seuils */
     private function abbrPlus(int $n): string
     {
         if ($n >= 1_000_000) return floor($n / 1_000_000) . 'M+';
         if ($n >= 100_000)   return floor($n / 1_000) . 'k+';
         if ($n >= 10_000)    return floor($n / 1_000) . 'k+';
-        if ($n >= 1_000)     return number_format($n); // "1,234"
+        if ($n >= 1_000)     return number_format($n);
         return (string) $n;
     }
 
-    /** Résout la période en (from, to, label) */
     private function resolvePeriod(?string $period): array
     {
         $period = $period ?: 'all';
