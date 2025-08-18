@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
 class SubCategory extends Model
@@ -128,6 +129,24 @@ class SubCategory extends Model
         return $this->where('slug', $value)
             ->orWhere('id', $value)
             ->firstOrFail();
+    }
+
+    public function images(): HasMany
+    {
+        return $this->hasMany(SubCategoryImage::class)->orderBy('sort_order');
+    }
+
+    public function primaryImage(): HasOne
+    {
+        return $this->hasOne(SubCategoryImage::class)->where('is_primary', true);
+    }
+
+// (optionnel) exposer l’URL principale
+    protected $appends = ['primary_image_url'];
+
+    public function getPrimaryImageUrlAttribute(): ?string
+    {
+        return optional($this->primaryImage)->url;
     }
 
 }
