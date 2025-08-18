@@ -9,6 +9,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ServiceOfferingController;
 use App\Http\Controllers\SubCategoryController;
+use App\Http\Controllers\SubCategoryImageController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
@@ -208,6 +209,16 @@ $api->version('v1', function (Router $api) {
 
     Route::prefix('metrics')->group(function () {
         Route::get('/overview', [MetricsController::class, 'overview']); // GET /api/metrics/overview?period=30d
+    });
+
+    Route::prefix('subcategories/{subCategory}/images')->group(function () {
+        Route::get('/', [SubCategoryImageController::class, 'index']);
+        Route::get('/{image}', [SubCategoryImageController::class, 'show']);
+        Route::post('/', [SubCategoryImageController::class, 'store']);
+        Route::patch('/{image}', [SubCategoryImageController::class, 'update']);
+        Route::post('/reorder', [SubCategoryImageController::class, 'reorder']);
+        Route::post('/{image}/primary', [SubCategoryImageController::class, 'setPrimary']);
+        Route::delete('/{image}', [SubCategoryImageController::class, 'destroy']);
     });
 
 });

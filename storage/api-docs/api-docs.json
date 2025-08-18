@@ -4978,6 +4978,403 @@
                 }
             }
         },
+        "/api/subcategories/{subCategory}/images": {
+            "get": {
+                "tags": [
+                    "SubCategory Images"
+                ],
+                "summary": "Lister les images d'une sous-catégorie",
+                "operationId": "8eb87dd7ee2e56abd2c14ff95fe4b208",
+                "parameters": [
+                    {
+                        "name": "subCategory",
+                        "in": "path",
+                        "description": "Slug ou ID selon ton binding",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "sub_category_id": {
+                                            "type": "integer"
+                                        },
+                                        "primary_image_url": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "images": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/SubCategoryImage"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "SubCategory Images"
+                ],
+                "summary": "Ajouter des images (upload et/ou URLs). Option 'replace' pour remplacer la liste.",
+                "operationId": "0daddc87c160861957baa4dcce688ecb",
+                "parameters": [
+                    {
+                        "name": "subCategory",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "replace": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "primary_index": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "example": 0
+                                    },
+                                    "alt": {
+                                        "type": "string",
+                                        "example": "Image principale"
+                                    },
+                                    "images": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "replace": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "primary_index": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "example": 0
+                                    },
+                                    "alt": {
+                                        "type": "string",
+                                        "example": "Image principale"
+                                    },
+                                    "image_urls": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "uri"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/subcategories/{subCategory}/images/{image}": {
+            "get": {
+                "tags": [
+                    "SubCategory Images"
+                ],
+                "summary": "Afficher une image",
+                "operationId": "bce5b1f5868820cc281419a91d73e45a",
+                "parameters": [
+                    {
+                        "name": "subCategory",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "image",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SubCategoryImage"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "SubCategory Images"
+                ],
+                "summary": "Supprimer une image",
+                "operationId": "42b4758ac12c45e0e7210b3459fd55e1",
+                "parameters": [
+                    {
+                        "name": "subCategory",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "image",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Supprimé"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "SubCategory Images"
+                ],
+                "summary": "Mettre à jour une image (alt, is_primary, sort_order, remplacement fichier/URL)",
+                "operationId": "56311872c3a071ba48376426b577a39e",
+                "parameters": [
+                    {
+                        "name": "subCategory",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "image",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "alt": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "is_primary": {
+                                        "type": "boolean"
+                                    },
+                                    "sort_order": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                    },
+                                    "image": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "alt": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "is_primary": {
+                                        "type": "boolean"
+                                    },
+                                    "sort_order": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                    },
+                                    "path": {
+                                        "description": "URL de remplacement",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/subcategories/{subCategory}/images/reorder": {
+            "post": {
+                "tags": [
+                    "SubCategory Images"
+                ],
+                "summary": "Réordonner les images",
+                "operationId": "92648c114f05930778e52490f012351d",
+                "parameters": [
+                    {
+                        "name": "subCategory",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "orders": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 12
+                                                },
+                                                "sort_order": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/subcategories/{subCategory}/images/{image}/primary": {
+            "post": {
+                "tags": [
+                    "SubCategory Images"
+                ],
+                "summary": "Définir l'image principale",
+                "operationId": "53bd34f7d45c27654a37d3ddf314372b",
+                "parameters": [
+                    {
+                        "name": "subCategory",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "image",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/subscriptions": {
             "get": {
                 "tags": [
@@ -7577,6 +7974,48 @@
                     }
                 },
                 "type": "object"
+            },
+            "SubCategoryImage": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "sub_category_id": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "path": {
+                        "type": "string",
+                        "example": "subcategories/abc123.jpg"
+                    },
+                    "url": {
+                        "type": "string",
+                        "example": "https://example.com/storage/subcategories/abc123.jpg"
+                    },
+                    "alt": {
+                        "type": "string",
+                        "example": "Photo de la sous-catégorie",
+                        "nullable": true
+                    },
+                    "is_primary": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
             }
         },
         "responses": {
@@ -7705,6 +8144,10 @@
         }
     },
     "tags": [
+        {
+            "name": "SubCategory Images",
+            "description": "Gestion des images liées aux sous-catégories"
+        },
         {
             "name": "Auth",
             "description": "Auth"
