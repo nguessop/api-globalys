@@ -138,6 +138,54 @@ use OpenApi\Annotations as OA;
  *           @OA\Property(property="approved", type="boolean", nullable=true, example=true)
  *         )
  *       )
+ *     ),
+ *
+ *     @OA\Schema(
+ *       schema="NewsletterSubscriber",
+ *       type="object",
+ *       @OA\Property(property="id", type="integer", example=101),
+ *       @OA\Property(property="email", type="string", format="email", example="abonne@example.com"),
+ *       @OA\Property(property="name", type="string", nullable=true, example="Alice K."),
+ *       @OA\Property(property="tags", type="array", @OA\Items(type="string"), example={"pro","fr"}),
+ *       @OA\Property(property="is_verified", type="boolean", example=false),
+ *       @OA\Property(property="source", type="string", nullable=true, example="landing-hero"),
+ *       @OA\Property(property="unsubscribed_at", type="string", format="date-time", nullable=true),
+ *       @OA\Property(property="created_at", type="string", format="date-time"),
+ *       @OA\Property(property="updated_at", type="string", format="date-time")
+ *     ),
+ *
+ *     @OA\Schema(
+ *       schema="NewsletterSubscriberResource",
+ *       type="object",
+ *       allOf={@OA\Schema(ref="#/components/schemas/NewsletterSubscriber")}
+ *     ),
+ *
+ *     @OA\Schema(
+ *       schema="NewsletterSubscriberCollection",
+ *       type="object",
+ *       @OA\Property(
+ *         property="data",
+ *         type="array",
+ *         @OA\Items(ref="#/components/schemas/NewsletterSubscriberResource")
+ *       ),
+ *       @OA\Property(
+ *         property="meta",
+ *         type="object",
+ *         @OA\Property(property="current_page", type="integer", example=1),
+ *         @OA\Property(property="per_page", type="integer", example=15),
+ *         @OA\Property(property="total", type="integer", example=42),
+ *         @OA\Property(property="last_page", type="integer", example=3)
+ *       )
+ *     ),
+ *
+ *     @OA\Schema(
+ *       schema="NewsletterSubscribePayload",
+ *       type="object",
+ *       required={"email"},
+ *       @OA\Property(property="email", type="string", format="email", example="abonne@example.com"),
+ *       @OA\Property(property="name", type="string", nullable=true, example="Alice"),
+ *       @OA\Property(property="tags", type="array", @OA\Items(type="string"), example={"pro","fr"}),
+ *       @OA\Property(property="source", type="string", nullable=true, example="landing-hero")
  *     )
  *   )
  * )

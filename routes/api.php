@@ -5,6 +5,7 @@ use App\Http\Controllers\AvailabilitySlotController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CommissionController;
 use App\Http\Controllers\MetricsController;
+use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ServiceOfferingController;
@@ -219,6 +220,12 @@ $api->version('v1', function (Router $api) {
         Route::post('/reorder', [SubCategoryImageController::class, 'reorder']);
         Route::post('/{image}/primary', [SubCategoryImageController::class, 'setPrimary']);
         Route::delete('/{image}', [SubCategoryImageController::class, 'destroy']);
+    });
+
+    Route::prefix('newsletter')->group(function () {
+        Route::post('/subscribe',   [NewsletterController::class, 'subscribe']);
+        Route::post('/unsubscribe', [NewsletterController::class, 'unsubscribe']);
+        Route::get('/confirm/{token}', [NewsletterController::class, 'confirm']);
     });
 
 });

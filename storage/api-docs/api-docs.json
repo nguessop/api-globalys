@@ -2701,6 +2701,138 @@
                 }
             }
         },
+        "/api/newsletter/subscribe": {
+            "post": {
+                "tags": [
+                    "Newsletter"
+                ],
+                "summary": "Inscrire un email à la newsletter",
+                "operationId": "3aa61be29ffb066a9485dfa17dd4afd6",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NewsletterSubscribePayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Inscription réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Abonné avec succès"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/NewsletterSubscriberResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/newsletter/subscribers": {
+            "get": {
+                "tags": [
+                    "Newsletter"
+                ],
+                "summary": "Lister les abonnés",
+                "operationId": "97bd7eb020bc7e768f8df06371457c06",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NewsletterSubscriberCollection"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/newsletter/unsubscribe/{email}": {
+            "delete": {
+                "tags": [
+                    "Newsletter"
+                ],
+                "summary": "Désinscrire un email",
+                "operationId": "291d31a14351e2b59cbe4fab1a2e4aee",
+                "parameters": [
+                    {
+                        "name": "email",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "email"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Désinscription réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Désinscrit"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            }
+        },
         "/api/payments": {
             "get": {
                 "tags": [
@@ -7975,6 +8107,130 @@
                 },
                 "type": "object"
             },
+            "NewsletterSubscriber": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 101
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "abonne@example.com"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Alice K.",
+                        "nullable": true
+                    },
+                    "tags": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "pro",
+                            "fr"
+                        ]
+                    },
+                    "is_verified": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "source": {
+                        "type": "string",
+                        "example": "landing-hero",
+                        "nullable": true
+                    },
+                    "unsubscribed_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "NewsletterSubscriberResource": {
+                "type": "object",
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/NewsletterSubscriber"
+                    }
+                ]
+            },
+            "NewsletterSubscriberCollection": {
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/NewsletterSubscriberResource"
+                        }
+                    },
+                    "meta": {
+                        "properties": {
+                            "current_page": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "per_page": {
+                                "type": "integer",
+                                "example": 15
+                            },
+                            "total": {
+                                "type": "integer",
+                                "example": 42
+                            },
+                            "last_page": {
+                                "type": "integer",
+                                "example": 3
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "NewsletterSubscribePayload": {
+                "required": [
+                    "email"
+                ],
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "abonne@example.com"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Alice",
+                        "nullable": true
+                    },
+                    "tags": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "pro",
+                            "fr"
+                        ]
+                    },
+                    "source": {
+                        "type": "string",
+                        "example": "landing-hero",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "SubCategoryImage": {
                 "properties": {
                     "id": {
@@ -8133,6 +8389,16 @@
                         }
                     }
                 }
+            },
+            "NewsletterSubscribeRequest": {
+                "required": true,
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/NewsletterSubscribePayload"
+                        }
+                    }
+                }
             }
         },
         "securitySchemes": {
@@ -8171,6 +8437,10 @@
         {
             "name": "Metrics",
             "description": "Metrics"
+        },
+        {
+            "name": "Newsletter",
+            "description": "Newsletter"
         },
         {
             "name": "Payments",
