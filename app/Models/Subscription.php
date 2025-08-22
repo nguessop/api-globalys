@@ -32,6 +32,8 @@ class Subscription extends Model
         'commission_rate',      // si percent => % (ex: 5.00 = 5%)
         'commission_fixed',     // si fixed   => montant (ex: 500 = 500 XAF)
         'commission_notes',     // optionnel (texte libre)
+
+        'detail',
     ];
 
     protected $casts = [
@@ -41,6 +43,7 @@ class Subscription extends Model
         'price'            => 'decimal:2',
         'commission_rate'  => 'decimal:2',
         'commission_fixed' => 'decimal:2',
+        'detail' => 'array',
     ];
 
     public function user(): BelongsTo

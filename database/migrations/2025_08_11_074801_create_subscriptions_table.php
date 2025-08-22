@@ -51,6 +51,7 @@ class CreateSubscriptionsTable extends Migration
 
             $table->text('commission_notes')->nullable();
 
+            $table->json('detail')->nullable();
 
             $table->timestamps();
         });

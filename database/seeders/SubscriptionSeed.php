@@ -21,16 +21,16 @@ class SubscriptionSeed extends Seeder
             };
 
             /* ------------------------------------------------
-             | 1) Récupérer quelques comptes de démo (si présents)
+             | 1) Comptes de démo
              ------------------------------------------------ */
             $provider = User::where('email', 'prestataire@globalys.com')->first();
             $company  = User::where('email', 'entreprise@globalys.com')->first();
 
             /* ------------------------------------------------
-             | 2) Seed pour le PRESTATAIRE (historique + actif)
+             | 2) PRESTATAIRE (historique + actif)
              ------------------------------------------------ */
             if ($provider) {
-                // Historique (ex: trial terminé → cancelled)
+                // Historique (trial terminé)
                 Subscription::updateOrCreate(
                     [
                         'user_id'   => $provider->id,
@@ -38,18 +38,36 @@ class SubscriptionSeed extends Seeder
                         'status'    => 'cancelled',
                     ],
                     [
-                        'plan_name'        => 'Basic Trial',
-                        'price'            => 0,
-                        'currency'         => 'XAF',
-                        'start_date'       => Carbon::now()->subMonths(3)->startOfDay(),
-                        'end_date'         => Carbon::now()->subMonths(2)->endOfMonth(),
-                        'auto_renew'       => false,
-                        'payment_method'   => null,
-                        'payment_reference'=> null,
-                        'commission_type'  => 'percent',
-                        'commission_rate'  => 12.00,     // decimal(5,2)
-                        'commission_fixed' => null,      // si percent, laisser null
-                        'commission_notes' => 'Trial terminé - seed',
+                        'plan_name'         => 'Basic Trial',
+                        'price'             => 0,
+                        'currency'          => 'XAF',
+                        'start_date'        => Carbon::now()->subMonths(3)->startOfDay(),
+                        'end_date'          => Carbon::now()->subMonths(2)->endOfMonth(),
+                        'auto_renew'        => false,
+                        'payment_method'    => null,
+                        'payment_reference' => null,
+                        'commission_type'   => 'percent',
+                        'commission_rate'   => 12.00,
+                        'commission_fixed'  => null,
+                        'commission_notes'  => 'Trial terminé - seed',
+                        'detail' => [
+                            'period'      => '/mois',
+                            'title'       => 'Basic Trial',
+                            'subtitle'    => 'Essai gratuit 30 jours',
+                            'old_price'   => null,
+                            'popular'     => false,
+                            'color'       => 'blue',
+                            'badge'       => null,
+                            'bullets'     => [
+                                "Jusqu'à 5 services",
+                                "10 réservations/mois",
+                                "Support email",
+                            ],
+                            'limitations' => [
+                                'Commission 12%',
+                                'Pas de personnalisation',
+                            ],
+                        ],
                     ]
                 );
 
@@ -61,22 +79,41 @@ class SubscriptionSeed extends Seeder
                         'status'    => 'active',
                     ],
                     [
-                        'plan_name'        => 'Pro Gold',
-                        'price'            => 25000.00,  // decimal(10,2)
-                        'currency'         => 'XAF',
-                        'start_date'       => Carbon::now()->startOfMonth(),
-                        'end_date'         => null,       // reconduction tacite
-                        'auto_renew'       => true,
-                        'payment_method'   => null,
-                        'payment_reference'=> null,
-                        'commission_type'  => 'percent',
-                        'commission_rate'  => 10.00,      // 10%
-                        'commission_fixed' => null,
-                        'commission_notes' => 'Plan Gold - seed',
+                        'plan_name'         => 'Pro Gold',
+                        'price'             => 25000.00,
+                        'currency'          => 'XAF',
+                        'start_date'        => Carbon::now()->startOfMonth(),
+                        'end_date'          => null,
+                        'auto_renew'        => true,
+                        'payment_method'    => null,
+                        'payment_reference' => null,
+                        'commission_type'   => 'percent',
+                        'commission_rate'   => 10.00,
+                        'commission_fixed'  => null,
+                        'commission_notes'  => 'Plan Gold - seed',
+                        'detail' => [
+                            'period'      => '/mois',
+                            'title'       => 'Gold',
+                            'subtitle'    => 'Pour les entreprises ambitieuses',
+                            'old_price'   => 30000,
+                            'popular'     => true,
+                            'color'       => 'gold',
+                            'badge'       => 'Plus populaire',
+                            'bullets'     => [
+                                'Services illimités',
+                                'Réservations illimitées',
+                                'Support 24/7',
+                                'Analytics avancés',
+                                'Multi-utilisateurs',
+                                'Personnalisation avancée',
+                            ],
+                            'limitations' => [
+                                'Commission 10%',
+                            ],
+                        ],
                     ]
                 );
 
-                // Pointer users.subscription_id vers l’actif (si la colonne existe)
                 if ($provider->subscription_id !== $providerActive->id) {
                     $provider->subscription_id = $providerActive->id;
                     $provider->save();
@@ -86,7 +123,7 @@ class SubscriptionSeed extends Seeder
             }
 
             /* ------------------------------------------------
-             | 3) Seed pour l’ENTREPRISE (historique + actif)
+             | 3) ENTREPRISE (historique + actif)
              ------------------------------------------------ */
             if ($company) {
                 // Historique (trial annulé)
@@ -97,18 +134,34 @@ class SubscriptionSeed extends Seeder
                         'status'    => 'cancelled',
                     ],
                     [
-                        'plan_name'        => 'Business Trial',
-                        'price'            => 0,
-                        'currency'         => 'XAF',
-                        'start_date'       => Carbon::now()->subMonths(6)->startOfDay(),
-                        'end_date'         => Carbon::now()->subMonths(5)->endOfMonth(),
-                        'auto_renew'       => false,
-                        'payment_method'   => null,
-                        'payment_reference'=> null,
-                        'commission_type'  => 'percent',
-                        'commission_rate'  => 12.50,
-                        'commission_fixed' => null,
-                        'commission_notes' => 'Trial Entreprise terminé - seed',
+                        'plan_name'         => 'Business Trial',
+                        'price'             => 0,
+                        'currency'          => 'XAF',
+                        'start_date'        => Carbon::now()->subMonths(6)->startOfDay(),
+                        'end_date'          => Carbon::now()->subMonths(5)->endOfMonth(),
+                        'auto_renew'        => false,
+                        'payment_method'    => null,
+                        'payment_reference' => null,
+                        'commission_type'   => 'percent',
+                        'commission_rate'   => 12.50,
+                        'commission_fixed'  => null,
+                        'commission_notes'  => 'Trial Entreprise terminé - seed',
+                        'detail' => [
+                            'period'      => '/mois',
+                            'title'       => 'Business Trial',
+                            'subtitle'    => 'Essai gratuit 30 jours',
+                            'old_price'   => null,
+                            'popular'     => false,
+                            'color'       => 'blue',
+                            'badge'       => null,
+                            'bullets'     => [
+                                "Jusqu'à 5 services",
+                                'Support email',
+                            ],
+                            'limitations' => [
+                                'Commission 12.5%',
+                            ],
+                        ],
                     ]
                 );
 
@@ -120,18 +173,37 @@ class SubscriptionSeed extends Seeder
                         'status'    => 'active',
                     ],
                     [
-                        'plan_name'        => 'Business Silver',
-                        'price'            => 45000.00,
-                        'currency'         => 'XAF',
-                        'start_date'       => Carbon::now()->startOfMonth(),
-                        'end_date'         => null,
-                        'auto_renew'       => true,
-                        'payment_method'   => null,
-                        'payment_reference'=> null,
-                        'commission_type'  => 'percent',
-                        'commission_rate'  => 8.00,
-                        'commission_fixed' => null,
-                        'commission_notes' => 'Plan Silver - seed',
+                        'plan_name'         => 'Business Silver',
+                        'price'             => 45000.00,
+                        'currency'          => 'XAF',
+                        'start_date'        => Carbon::now()->startOfMonth(),
+                        'end_date'          => null,
+                        'auto_renew'        => true,
+                        'payment_method'    => null,
+                        'payment_reference' => null,
+                        'commission_type'   => 'percent',
+                        'commission_rate'   => 8.00,
+                        'commission_fixed'  => null,
+                        'commission_notes'  => 'Plan Silver - seed',
+                        'detail' => [
+                            'period'      => '/mois',
+                            'title'       => 'Silver',
+                            'subtitle'    => 'Idéal pour petites équipes',
+                            'old_price'   => 55000,
+                            'popular'     => false,
+                            'color'       => 'purple',
+                            'badge'       => null,
+                            'bullets'     => [
+                                'Jusqu’à 30 services',
+                                '200 réservations/mois',
+                                'Support prioritaire',
+                                'Intégration calendrier',
+                                'Pages personnalisables',
+                            ],
+                            'limitations' => [
+                                'Commission 8%',
+                            ],
+                        ],
                     ]
                 );
 
@@ -145,8 +217,6 @@ class SubscriptionSeed extends Seeder
 
             /* ------------------------------------------------
              | 4) Filet de sécurité (plan gratuit actif)
-             |    Pour tout prestataire/entreprise sans abonnement ACTIF
-             |    et sans subscription_id.
              ------------------------------------------------ */
             $targets = User::query()
                 ->where(function ($w) {
@@ -166,18 +236,38 @@ class SubscriptionSeed extends Seeder
                         'status'    => 'active',
                     ],
                     [
-                        'plan_name'        => 'Basic Free',
-                        'price'            => 0,
-                        'currency'         => 'XAF',
-                        'start_date'       => Carbon::now()->startOfDay(),
-                        'end_date'         => null,
-                        'auto_renew'       => true,
-                        'payment_method'   => null,
-                        'payment_reference'=> null,
-                        'commission_type'  => 'percent',
-                        'commission_rate'  => 12.00,
-                        'commission_fixed' => null,
-                        'commission_notes' => 'Filet de sécurité - plan gratuit',
+                        'plan_name'         => 'Basic Free',
+                        'price'             => 0,
+                        'currency'          => 'XAF',
+                        'start_date'        => Carbon::now()->startOfDay(),
+                        'end_date'          => null,
+                        'auto_renew'        => true,
+                        'payment_method'    => null,
+                        'payment_reference' => null,
+                        'commission_type'   => 'percent',
+                        'commission_rate'   => 12.00,
+                        'commission_fixed'  => null,
+                        'commission_notes'  => 'Filet de sécurité - plan gratuit',
+                        'detail' => [
+                            'period'      => '/mois',
+                            'title'       => 'Starter',
+                            'subtitle'    => 'Parfait pour débuter',
+                            'old_price'   => null,
+                            'popular'     => false,
+                            'color'       => 'blue',
+                            'badge'       => null,
+                            'bullets'     => [
+                                "Jusqu'à 5 services",
+                                '10 réservations/mois',
+                                'Support email',
+                                'Tableau de bord basique',
+                                'Paiements sécurisés',
+                            ],
+                            'limitations' => [
+                                'Commission 12%',
+                                'Pas de personnalisation',
+                            ],
+                        ],
                     ]
                 );
 
