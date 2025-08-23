@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\ServiceOffering;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use OpenApi\Annotations as OA;
@@ -370,5 +372,91 @@ class CategoryController extends Controller
         ]);
 
         return response()->success([$category->toArray()], 'Catégorie mise à jour avec succès');
+    }
+
+
+    /**
+     * Liste paginée des prestataires ayant au moins une offre dans la catégorie.
+     *
+     * @OA\Get(
+     *   path="/api/categories/{category}/providers",
+     *   tags={"Categories"},
+     *   summary="Prestataires par catégorie",
+     *   description="Retourne les utilisateurs (prestataires) qui ont au moins une service_offering dans une sous-catégorie de cette catégorie.",
+     *   @OA\Parameter(
+     *     name="category",
+     *     in="path",
+     *     required=true,
+     *     description="Slug (ou ID si le binding est configuré ainsi) de la catégorie",
+     *     @OA\Schema(type="string")
+     *   ),
+     *   @OA\Parameter(name="per_page", in="query", @OA\Schema(type="integer", default=12)),
+     *   @OA\Parameter(name="city", in="query", description="Filtrer par ville", @OA\Schema(type="string")),
+     *   @OA\Parameter(name="search", in="query", description="Nom/prénom/entreprise", @OA\Schema(type="string")),
+     *   @OA\Response(
+     *     response=200,
+     *     description="OK",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="success", type="boolean", example=true),
+     *       @OA\Property(property="message", type="string", example="Prestataires listés avec succès"),
+     *       @OA\Property(property="data", type="object")
+     *     )
+     *   )
+     * )
+     */
+    public function providers(Request $request, Category $category)
+    {
+        $perPage = (int) $request->get('per_page', 12);
+        $city    = $request->get('city');
+        $search  = $request->get('search');
+
+        // includes optionnels (whitelist simple)
+        $allowedIncludes = ['role','currentSubscription','subscriptions','serviceOfferings','reviewsReceived','availabilitySlots'];
+        $includes = [];
+        if ($inc = $request->get('include')) {
+            $parts = array_filter(array_map('trim', explode(',', $inc)));
+            $includes = array_values(array_intersect($parts, $allowedIncludes));
+        }
+
+        // Tous les providers qui ont AU MOINS une offre dans une sous-cat de cette catégorie
+        $providerIds = ServiceOffering::query()
+            ->select('provider_id')
+            ->whereHas('subCategory', function ($q) use ($category) {
+                $q->where('category_id', $category->id);
+            })
+            ->groupBy('provider_id');
+
+        $query = User::query()
+            ->with($includes)
+            ->whereHas('role', function ($q) {
+                $q->where('name', 'prestataire');
+            })
+            ->whereIn('id', $providerIds)
+            ->when($city, function ($q) use ($city) {
+                $q->where(function ($qq) use ($city) {
+                    $qq->where('company_city', $city)
+                        ->orWhere('personal_address', 'like', "%{$city}%");
+                });
+            })
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($qq) use ($search) {
+                    $qq->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%")
+                        ->orWhere('company_name', 'like', "%{$search}%");
+                });
+            })
+            ->withCount(['serviceOfferings as services_count' => function ($q) use ($category) {
+                $q->whereHas('subCategory', function ($qq) use ($category) {
+                    $qq->where('category_id', $category->id);
+                });
+            }])
+            ->orderBy('created_at', 'desc');
+
+        $users = $request->get('per_page') === 'all'
+            ? $query->get()
+            : $query->paginate($perPage);
+
+        return response()->success($users, 'Prestataires listés avec succès');
     }
 }

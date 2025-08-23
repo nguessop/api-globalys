@@ -1032,4 +1032,249 @@ class UserController extends Controller
         $roles = Role::select('id','name')->get();
         return response()->success($roles, 'Rôles récupérés');
     }
+
+    /**
+     * @OA\Get(
+     *   path="/api/users/admins",
+     *   tags={"Users"},
+     *   summary="Lister les administrateurs",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="q", in="query", description="Recherche (first_name,last_name,email)", @OA\Schema(type="string")),
+     *   @OA\Parameter(name="country", in="query", @OA\Schema(type="string", maxLength=2)),
+     *   @OA\Parameter(name="city", in="query", @OA\Schema(type="string")),
+     *   @OA\Parameter(name="include", in="query", description="Relations CSV (ex: role,currentSubscription,subscriptions)", @OA\Schema(type="string")),
+     *   @OA\Parameter(name="sort", in="query", description="CSV ex: first_name,-created_at", @OA\Schema(type="string")),
+     *   @OA\Parameter(name="per_page", in="query", description="Taille de page ex: 15 ou 'all'", @OA\Schema(type="string")),
+     *   @OA\Response(
+     *     response=200,
+     *     description="OK",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="success", type="boolean", example=true),
+     *       @OA\Property(property="message", type="string", example="Administrateurs récupérés"),
+     *       @OA\Property(property="data", type="object", description="Paginé si per_page ≠ all")
+     *     )
+     *   )
+     * )
+     */
+    public function admins(Request $request)
+    {
+        $includes = $this->parseIncludes($request);
+
+        $query = User::query()
+            ->with($includes)
+            ->whereHas('role', function ($q) {
+                $q->where('name', 'admin');
+            });
+
+        if ($request->filled('country')) {
+            $query->where('country', $request->get('country'));
+        }
+        if ($request->filled('city')) {
+            $city = $request->get('city');
+            $query->where(function ($q) use ($city) {
+                $q->where('company_city', $city)
+                    ->orWhere('personal_address', 'like', "%{$city}%");
+            });
+        }
+        if ($request->filled('q')) {
+            $kw = $request->get('q');
+            $query->where(function ($sub) use ($kw) {
+                $sub->where('first_name', 'like', "%{$kw}%")
+                    ->orWhere('last_name', 'like', "%{$kw}%")
+                    ->orWhere('email', 'like', "%{$kw}%");
+            });
+        }
+
+        if ($request->filled('sort')) {
+            foreach (explode(',', $request->get('sort')) as $s) {
+                $direction = 'asc';
+                $column = $s;
+                if (substr($s, 0, 1) === '-') {
+                    $direction = 'desc';
+                    $column = substr($s, 1);
+                }
+                if (in_array($column, ['first_name','last_name','email','created_at','country'], true)) {
+                    $query->orderBy($column, $direction);
+                }
+            }
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        $items = $request->get('per_page') === 'all'
+            ? $query->get()
+            : $query->paginate((int) $request->get('per_page', 15));
+
+        return response()->success($items, 'Administrateurs récupérés');
+    }
+
+    /**
+     * @OA\Get(
+     *   path="/api/users/entreprises",
+     *   tags={"Users"},
+     *   summary="Lister les comptes de type entreprise",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="q", in="query", description="Recherche (first_name,last_name,email,company_name)", @OA\Schema(type="string")),
+     *   @OA\Parameter(name="country", in="query", @OA\Schema(type="string", maxLength=2)),
+     *   @OA\Parameter(name="city", in="query", @OA\Schema(type="string")),
+     *   @OA\Parameter(name="include", in="query", description="Relations CSV (ex: role,currentSubscription,subscriptions)", @OA\Schema(type="string")),
+     *   @OA\Parameter(name="sort", in="query", description="CSV ex: company_name,-created_at", @OA\Schema(type="string")),
+     *   @OA\Parameter(name="per_page", in="query", description="Taille de page ex: 15 ou 'all'", @OA\Schema(type="string")),
+     *   @OA\Response(
+     *     response=200,
+     *     description="OK",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="success", type="boolean", example=true),
+     *       @OA\Property(property="message", type="string", example="Entreprises récupérées"),
+     *       @OA\Property(property="data", type="object", description="Paginé si per_page ≠ all")
+     *     )
+     *   )
+     * )
+     */
+    public function entreprises(Request $request)
+    {
+        $includes = $this->parseIncludes($request);
+
+        $query = User::query()
+            ->with($includes)
+            ->whereHas('role', function ($q) {
+                $q->where('name', 'entreprise');
+            });
+
+        if ($request->filled('country')) {
+            $query->where('country', $request->get('country'));
+        }
+        if ($request->filled('city')) {
+            $city = $request->get('city');
+            $query->where(function ($q) use ($city) {
+                $q->where('company_city', $city)
+                    ->orWhere('personal_address', 'like', "%{$city}%");
+            });
+        }
+        if ($request->filled('q')) {
+            $kw = $request->get('q');
+            $query->where(function ($sub) use ($kw) {
+                $sub->where('first_name', 'like', "%{$kw}%")
+                    ->orWhere('last_name', 'like', "%{$kw}%")
+                    ->orWhere('email', 'like', "%{$kw}%")
+                    ->orWhere('company_name', 'like', "%{$kw}%");
+            });
+        }
+
+        if ($request->filled('sort')) {
+            foreach (explode(',', $request->get('sort')) as $s) {
+                $direction = 'asc';
+                $column = $s;
+                if (substr($s, 0, 1) === '-') {
+                    $direction = 'desc';
+                    $column = substr($s, 1);
+                }
+                if (in_array($column, ['company_name','first_name','last_name','email','created_at','country'], true)) {
+                    $query->orderBy($column, $direction);
+                }
+            }
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        $items = $request->get('per_page') === 'all'
+            ? $query->get()
+            : $query->paginate((int) $request->get('per_page', 15));
+
+        return response()->success($items, 'Entreprises récupérées');
+    }
+
+    /**
+     * @OA\Get(
+     *   path="/api/users/prestataires",
+     *   tags={"Users"},
+     *   summary="Lister les prestataires",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="q", in="query", description="Recherche (first_name,last_name,email,company_name)", @OA\Schema(type="string")),
+     *   @OA\Parameter(name="country", in="query", @OA\Schema(type="string", maxLength=2)),
+     *   @OA\Parameter(name="city", in="query", @OA\Schema(type="string")),
+     *   @OA\Parameter(name="sub_category_id", in="query", description="Filtrer les prestataires qui ont une offre dans cette sous-catégorie", @OA\Schema(type="integer")),
+     *   @OA\Parameter(name="category_id", in="query", description="Filtrer via la catégorie de la sous-catégorie de l'offre", @OA\Schema(type="integer")),
+     *   @OA\Parameter(name="include", in="query", description="Relations CSV (ex: role,currentSubscription,serviceOfferings)", @OA\Schema(type="string")),
+     *   @OA\Parameter(name="sort", in="query", description="CSV ex: first_name,-created_at", @OA\Schema(type="string")),
+     *   @OA\Parameter(name="per_page", in="query", description="Taille de page ex: 15 ou 'all'", @OA\Schema(type="string")),
+     *   @OA\Response(response=200, description="OK")
+     * )
+     */
+    public function prestataires(Request $request)
+    {
+        $includes = $this->parseIncludes($request);
+
+        $query = User::query()
+            ->with($includes)
+            ->whereHas('role', function ($q) {
+                $q->where('name', 'prestataire');
+            });
+
+        // Filtres simples
+        if ($request->filled('country')) {
+            $query->where('country', $request->get('country'));
+        }
+        if ($request->filled('city')) {
+            $city = $request->get('city');
+            $query->where(function ($q) use ($city) {
+                $q->where('company_city', $city)
+                    ->orWhere('personal_address', 'like', "%{$city}%");
+            });
+        }
+        if ($request->filled('q')) {
+            $kw = $request->get('q');
+            $query->where(function ($sub) use ($kw) {
+                $sub->where('first_name', 'like', "%{$kw}%")
+                    ->orWhere('last_name', 'like', "%{$kw}%")
+                    ->orWhere('email', 'like', "%{$kw}%")
+                    ->orWhere('company_name', 'like', "%{$kw}%");
+            });
+        }
+
+        // Filtres par offre de service
+        if ($request->filled('sub_category_id')) {
+            $scId = (int) $request->get('sub_category_id');
+            $query->whereHas('serviceOfferings', function ($q) use ($scId) {
+                $q->where('sub_category_id', $scId);
+            })->withCount(['serviceOfferings as services_count' => function ($q) use ($scId) {
+                $q->where('sub_category_id', $scId);
+            }]);
+        } elseif ($request->filled('category_id')) {
+            $catId = (int) $request->get('category_id');
+            $query->whereHas('serviceOfferings.subCategory', function ($q) use ($catId) {
+                $q->where('category_id', $catId);
+            })->withCount(['serviceOfferings as services_count' => function ($q) use ($catId) {
+                $q->whereHas('subCategory', function ($qq) use ($catId) {
+                    $qq->where('category_id', $catId);
+                });
+            }]);
+        }
+
+        // Tri
+        if ($request->filled('sort')) {
+            foreach (explode(',', $request->get('sort')) as $s) {
+                $direction = 'asc';
+                $column = $s;
+                if (substr($s, 0, 1) === '-') {
+                    $direction = 'desc';
+                    $column = substr($s, 1);
+                }
+                if (in_array($column, ['first_name','last_name','email','created_at','country'], true)) {
+                    $query->orderBy($column, $direction);
+                }
+            }
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        // Pagination
+        $items = $request->get('per_page') === 'all'
+            ? $query->get()
+            : $query->paginate((int) $request->get('per_page', 15));
+
+        return response()->success($items, 'Prestataires récupérés');
+    }
 }

@@ -49,29 +49,42 @@ $api->version('v1', function (Router $api) {
         Route::get('/',           [UserController::class, 'index']);
         Route::get('/me',         [UserController::class, 'me']);
         Route::get('/roles',      [UserController::class, 'roles']);
+
+        // ✅ Routes fixes AVANT le paramètre dynamique
+        Route::get('/admins',       [UserController::class, 'admins']);
+        Route::get('/entreprises',  [UserController::class, 'entreprises']);
+        Route::get('/prestataires', [UserController::class, 'prestataires']);
+
         Route::post('/',          [UserController::class, 'store']);
-        Route::get('/{user}',     [UserController::class, 'show']);               // {user} = id ou email (via resolveRouteBinding)
-        Route::put('/{user}',     [UserController::class, 'update']);
-        Route::patch('/{user}',   [UserController::class, 'update']);
-        Route::delete('/{user}',  [UserController::class, 'destroy']);
 
-        Route::get('/{user}/bookings',           [UserController::class, 'bookings']);          // ?as=client|provider
-        Route::get('/{user}/service-offerings',  [UserController::class, 'serviceOfferings']);
-        Route::get('/{user}/reviews',            [UserController::class, 'reviews']);           // ?as=received|given
-        Route::get('/{user}/availability',       [UserController::class, 'availability']);
+        // ❗ Empêche {user} de matcher les mots réservés
+        $notReserved = '^(?!admins$|entreprises$|prestataires$|me$|roles$).+';
 
-        Route::post('/{user}/avatar',            [UserController::class, 'uploadAvatar']);      // multipart/form-data
-        Route::post('/{user}/password',          [UserController::class, 'changePassword']);
+        Route::get('/{user}',     [UserController::class, 'show'])->where('user', $notReserved);
+        Route::put('/{user}',     [UserController::class, 'update'])->where('user', $notReserved);
+        Route::patch('/{user}',   [UserController::class, 'update'])->where('user', $notReserved);
+        Route::delete('/{user}',  [UserController::class, 'destroy'])->where('user', $notReserved);
 
-        Route::post('/{user}/subscription/assign', [UserController::class, 'assignSubscription']);
-        Route::post('/{user}/subscription/revoke', [UserController::class, 'revokeSubscription']);
+        Route::get('/{user}/bookings',           [UserController::class, 'bookings'])->where('user', $notReserved);
+        Route::get('/{user}/service-offerings',  [UserController::class, 'serviceOfferings'])->where('user', $notReserved);
+        Route::get('/{user}/reviews',            [UserController::class, 'reviews'])->where('user', $notReserved);
+        Route::get('/{user}/availability',       [UserController::class, 'availability'])->where('user', $notReserved);
+
+        Route::post('/{user}/avatar',            [UserController::class, 'uploadAvatar'])->where('user', $notReserved);
+        Route::post('/{user}/password',          [UserController::class, 'changePassword'])->where('user', $notReserved);
+
+        Route::post('/{user}/subscription/assign', [UserController::class, 'assignSubscription'])->where('user', $notReserved);
+        Route::post('/{user}/subscription/revoke', [UserController::class, 'revokeSubscription'])->where('user', $notReserved);
     });
+
 
     Route::prefix('categories')->group(function () {
         // --- Categories
         Route::get('/', [CategoryController::class, 'index']); // tu peux aussi faire ceci: GET /api/categories?search=Beauté
         Route::get('/{category}', [CategoryController::class, 'show']); // {category} = slug
         Route::get('/{category}/subcategories', [CategoryController::class, 'subcategories']); // liste des subcats d'une catégorie
+        // 👉 nouvelle route
+        Route::get('/{category}/providers', [CategoryController::class, 'providers']);
         Route::post('/', [CategoryController::class, 'store']);
         Route::put('/{category}', [CategoryController::class, 'update']);
 
@@ -83,6 +96,7 @@ $api->version('v1', function (Router $api) {
         Route::post('/', [SubCategoryController::class, 'store']); // POST /api/subcategories
         Route::put('/{subCategory}', [SubCategoryController::class, 'update']); // PUT /api/subcategories/{slug}
         Route::patch('/{subCategory}', [SubCategoryController::class, 'update']); // PATCH aussi
+        Route::get('/{subCategory}/providers', [SubCategoryController::class, 'providers']);
     });
 
 

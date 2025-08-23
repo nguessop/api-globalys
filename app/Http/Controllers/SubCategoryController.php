@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\ServiceOffering;
 use App\Models\SubCategory;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -20,6 +22,7 @@ class SubCategoryController extends Controller
         // OU : protéger toutes sauf certaines
         // $this->middleware('auth:api')->except(['index', 'show']);
     }
+
     /**
      * @OA\Get(
      *   path="/api/subcategories",
@@ -152,14 +155,14 @@ class SubCategoryController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'category_id'   => ['nullable', 'integer', 'exists:categories,id'],
-            'category_slug' => ['nullable', 'string', 'exists:categories,slug'],
-            'name'          => ['required', 'string', 'max:255', 'unique:sub_categories,name'],
-            'slug'          => ['nullable', 'string', 'max:255', 'unique:sub_categories,slug'],
-            'icon'          => ['nullable', 'string', 'max:255'],
+            'category_id'     => ['nullable', 'integer', 'exists:categories,id'],
+            'category_slug'   => ['nullable', 'string', 'exists:categories,slug'],
+            'name'            => ['required', 'string', 'max:255', 'unique:sub_categories,name'],
+            'slug'            => ['nullable', 'string', 'max:255', 'unique:sub_categories,slug'],
+            'icon'            => ['nullable', 'string', 'max:255'],
             'providers_count' => ['nullable', 'integer', 'min:0'],
-            'average_price' => ['nullable', 'string', 'max:255'],
-            'description'   => ['nullable', 'string'],
+            'average_price'   => ['nullable', 'string', 'max:255'],
+            'description'     => ['nullable', 'string'],
         ]);
 
         if (empty($data['category_id']) && !empty($data['category_slug'])) {
@@ -268,14 +271,14 @@ class SubCategoryController extends Controller
     public function update(Request $request, SubCategory $subCategory)
     {
         $data = $request->validate([
-            'category_id'   => ['sometimes', 'nullable', 'integer', 'exists:categories,id'],
-            'category_slug' => ['sometimes', 'nullable', 'string', 'exists:categories,slug'],
-            'name'          => ['sometimes', 'required', 'string', 'max:255', Rule::unique('sub_categories', 'name')->ignore($subCategory->id)],
-            'slug'          => ['sometimes', 'nullable', 'string', 'max:255', Rule::unique('sub_categories', 'slug')->ignore($subCategory->id)],
-            'icon'          => ['sometimes', 'nullable', 'string', 'max:255'],
+            'category_id'     => ['sometimes', 'nullable', 'integer', 'exists:categories,id'],
+            'category_slug'   => ['sometimes', 'nullable', 'string', 'exists:categories,slug'],
+            'name'            => ['sometimes', 'required', 'string', 'max:255', Rule::unique('sub_categories', 'name')->ignore($subCategory->id)],
+            'slug'            => ['sometimes', 'nullable', 'string', 'max:255', Rule::unique('sub_categories', 'slug')->ignore($subCategory->id)],
+            'icon'            => ['sometimes', 'nullable', 'string', 'max:255'],
             'providers_count' => ['sometimes', 'nullable', 'integer', 'min:0'],
-            'average_price' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'description'   => ['sometimes', 'nullable', 'string'],
+            'average_price'   => ['sometimes', 'nullable', 'string', 'max:255'],
+            'description'     => ['sometimes', 'nullable', 'string'],
         ]);
 
         if (array_key_exists('category_slug', $data)) {
@@ -292,5 +295,69 @@ class SubCategoryController extends Controller
             [$subCategory->toArray()],
             'Sous-catégorie mise à jour avec succès'
         );
+    }
+
+    /**
+     * Liste paginée des prestataires ayant au moins une offre dans la sous-catégorie.
+     *
+     * @OA\Get(
+     *   path="/api/subcategories/{subCategory}/providers",
+     *   tags={"SubCategories"},
+     *   summary="Prestataires par sous-catégorie",
+     *   description="Retourne les utilisateurs (prestataires) qui ont au moins une service_offering dans cette sous-catégorie.",
+     *   @OA\Parameter(
+     *     name="subCategory",
+     *     in="path",
+     *     required=true,
+     *     description="Slug (ou ID selon le binding)",
+     *     @OA\Schema(type="string")
+     *   ),
+     *   @OA\Parameter(name="per_page", in="query", @OA\Schema(type="integer", default=12)),
+     *   @OA\Parameter(name="city", in="query", description="Filtrer par ville", @OA\Schema(type="string")),
+     *   @OA\Parameter(name="search", in="query", description="Nom/prénom/entreprise", @OA\Schema(type="string")),
+     *   @OA\Response(
+     *     response=200,
+     *     description="OK",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="success", type="boolean", example=true),
+     *       @OA\Property(property="message", type="string", example="Prestataires listés avec succès"),
+     *       @OA\Property(property="data", type="object", description="Réponse paginée Laravel (data, links, meta)")
+     *     )
+     *   )
+     * )
+     */
+    public function providers(Request $request, SubCategory $subCategory)
+    {
+        $perPage = (int) $request->get('per_page', 12);
+        $city    = $request->get('city');
+        $search  = $request->get('search');
+
+        // Sous-requête: tous les provider_id ayant une offre dans cette sous-catégorie
+        $providerIds = ServiceOffering::query()
+            ->select('provider_id')
+            ->where('sub_category_id', $subCategory->id)
+            ->groupBy('provider_id');
+
+        $users = User::query()
+            ->where('user_type', 'prestataire') // si tu utilises des rôles, adapte ici
+            ->whereIn('id', $providerIds)
+            ->when($city, function ($q) use ($city) {
+                $q->where('city', 'like', "%{$city}%");
+            })
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($qq) use ($search) {
+                    $qq->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%")
+                        ->orWhere('company_name', 'like', "%{$search}%");
+                });
+            })
+            // nombre d'offres du prestataire DANS cette sous-catégorie (utile côté UI)
+            ->withCount(['serviceOfferings as services_count' => function ($q) use ($subCategory) {
+                $q->where('sub_category_id', $subCategory->id);
+            }])
+            ->paginate($perPage);
+
+        return response()->success($users, 'Prestataires listés avec succès');
     }
 }
