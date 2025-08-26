@@ -232,4 +232,142 @@ class AuthController extends Controller
         // Ici tu branches soit Laravel Password Broker, soit ton propre workflow d'envoi mail/SMS.
         return response()->success(null, 'Lien de réinitialisation envoyé');
     }
+
+    /**
+     * @OA\Post(
+     *   path="/api/auth/register",
+     *   tags={"Auth"},
+     *   summary="Inscription (avec ou sans invitation)",
+     *   description="Crée un utilisateur puis renvoie un JWT. Si un token d’invitation est fourni, il impose le rôle (prestataire/entreprise) et peut restreindre l’email.",
+     *   @OA\RequestBody(
+     *     required=true,
+     *     @OA\JsonContent(
+     *       required={"first_name","last_name","email","password"},
+     *       @OA\Property(property="first_name", type="string", example="Alice"),
+     *       @OA\Property(property="last_name", type="string", example="Dupont"),
+     *       @OA\Property(property="email", type="string", format="email", example="alice@example.com"),
+     *       @OA\Property(property="password", type="string", format="password", minLength=6, example="secret123"),
+     *       @OA\Property(property="phone", type="string", nullable=true, example="+237670000000"),
+     *       @OA\Property(property="account_type", type="string", enum={"entreprise","particulier"}, nullable=true, example="particulier"),
+     *       @OA\Property(property="user_type", type="string", enum={"client","prestataire"}, nullable=true, example="client"),
+     *       @OA\Property(property="invite", type="string", format="uuid", nullable=true, example="e7dfc0c3-5b7b-4d7e-9e3e-0d8b8a0d2c8e", description="Token d’invitation"),
+     *       @OA\Property(property="company_name", type="string", nullable=true),
+     *       @OA\Property(property="company_city", type="string", nullable=true),
+     *       @OA\Property(property="personal_address", type="string", nullable=true)
+     *     )
+     *   ),
+     *   @OA\Response(
+     *     response=200,
+     *     description="Inscription réussie",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="success", type="boolean", example=true),
+     *       @OA\Property(
+     *         property="data",
+     *         type="object",
+     *         @OA\Property(property="token", type="string"),
+     *         @OA\Property(property="expires_in", type="integer", example=3600),
+     *         @OA\Property(property="user", type="object", description="Utilisateur créé avec son rôle")
+     *       ),
+     *       @OA\Property(property="message", type="string", example="Inscription réussie")
+     *     )
+     *   ),
+     *   @OA\Response(response=422, description="Validation error / email déjà pris / token invalide"),
+     *   @OA\Response(response=409, description="Invitation non valide (révoquée, expirée, email ne correspond pas)")
+     * )
+     */
+    public function register(Request $request)
+    {
+        // 1) Validation de base
+        $data = $request->validate([
+            'first_name'    => ['required','string','max:255'],
+            'last_name'     => ['required','string','max:255'],
+            'email'         => ['required','email','max:255','unique:users,email'],
+            'password'      => ['required','string','min:6'],
+            'phone'         => ['nullable','string','max:50'],
+
+            // Informations optionnelles côté business
+            'account_type'  => ['nullable','in:entreprise,particulier'],
+            'user_type'     => ['nullable','in:client,prestataire'],
+
+            // Token d’invitation éventuel
+            'invite'        => ['nullable','uuid'],
+
+            // Champs entreprise / perso optionnels
+            'company_name'  => ['nullable','string','max:255'],
+            'company_city'  => ['nullable','string','max:255'],
+            'personal_address' => ['nullable','string','max:255'],
+        ]);
+
+        // Valeurs par défaut si non fournis
+        $accountType = $data['account_type'] ?? 'particulier';
+        $userType    = $data['user_type'] ?? 'client';
+
+        // 2) Si une invitation est fournie, on verrouille le rôle
+        if (!empty($data['invite'])) {
+            $invite = RoleInvite::where('token', $data['invite'])->first();
+
+            if (!$invite || !$invite->isValid()) {
+                return response()->error('Invitation non valide.', null, 409);
+            }
+
+            if ($invite->email && strcasecmp($invite->email, $data['email']) !== 0) {
+                return response()->error('Cette invitation est réservée à un autre email.', null, 409);
+            }
+
+            // Impose le rôle via l’invitation
+            if ($invite->role === 'entreprise') {
+                $accountType = 'entreprise';
+                // côté business : on peut laisser user_type à null ou le garder tel quel
+            } elseif ($invite->role === 'prestataire') {
+                $accountType = $accountType === 'entreprise' ? 'entreprise' : 'particulier';
+                $userType = 'prestataire';
+            }
+        }
+
+        // 3) Détermination du role_id depuis la table roles
+        $roleName = $accountType === 'entreprise'
+            ? 'entreprise'
+            : ($userType === 'prestataire' ? 'prestataire' : 'client');
+
+        $roleId = Role::where('name', $roleName)->value('id');
+        if (!$roleId) {
+            // garde-fou : si la table roles n’a pas la valeur attendue
+            return response()->error("Le rôle '{$roleName}' est introuvable. Veuillez initialiser la table roles.", null, 422);
+        }
+
+        // 4) Création de l’utilisateur
+        /** @var \App\Models\User $user */
+        $user = User::create([
+            'first_name'   => $data['first_name'],
+            'last_name'    => $data['last_name'],
+            'email'        => $data['email'],
+            'password'     => $data['password'], // hash automatique via mutator setPasswordAttribute
+            'phone'        => $data['phone'] ?? null,
+
+            'account_type' => $accountType,       // 'entreprise' | 'particulier'
+            'user_type'    => $userType,          // 'client' | 'prestataire' | null
+            'role_id'      => $roleId,
+
+            'company_name'     => $data['company_name'] ?? null,
+            'company_city'     => $data['company_city'] ?? null,
+            'personal_address' => $data['personal_address'] ?? null,
+        ]);
+
+        // 5) Marquer l’utilisation de l’invitation (si présente)
+        if (!empty($data['invite']) && isset($invite)) {
+            $invite->used_count = (int)$invite->used_count + 1;
+            $invite->save();
+        }
+
+        // 6) Générer un token JWT et renvoyer la réponse
+        $token = JWTAuth::fromUser($user);
+
+        return response()->success([
+            'token'      => $token,
+            'expires_in' => auth('api')->factory()->getTTL() * 60,
+            'user'       => $user->load('role'),
+        ], 'Inscription réussie');
+    }
+
 }

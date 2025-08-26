@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AvailabilitySlotController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CommissionController;
+use App\Http\Controllers\InviteController;
 use App\Http\Controllers\MetricsController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\PaymentController;
@@ -44,6 +45,20 @@ $api->version('v1', function (Router $api) {
     Route::prefix('auth')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
     });
+
+    Route::prefix('auth')->group(function () {
+        Route::post('/register', [AuthController::class, 'register']); // public avec invite_token
+    });
+
+    Route::middleware('auth:api')->group(function () {
+        Route::post('/invites', [InviteController::class, 'create']);      // créer un lien (admin/staff)
+        Route::post('/invites/{token}/revoke', [InviteController::class, 'revoke']);
+    });
+
+// public: vérifier un token (pour pré-remplir l’écran)
+    Route::get('/invites/{token}', [InviteController::class, 'show']);
+
+
 
     Route::prefix('users')->group(function () {
         Route::get('/',           [UserController::class, 'index']);
