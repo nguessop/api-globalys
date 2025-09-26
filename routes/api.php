@@ -5,6 +5,7 @@ use App\Http\Controllers\AvailabilitySlotController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CommissionController;
 use App\Http\Controllers\InviteController;
+use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\MetricsController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\PaymentController;
@@ -90,6 +91,23 @@ $api->version('v1', function (Router $api) {
 
         Route::post('/{user}/subscription/assign', [UserController::class, 'assignSubscription'])->where('user', $notReserved);
         Route::post('/{user}/subscription/revoke', [UserController::class, 'revokeSubscription'])->where('user', $notReserved);
+
+
+        // NEW: meetings & contracts d’un user
+        Route::get('/{user}/meetings',  [UserController::class, 'meetings'])->where('user', $notReserved);
+        Route::get('/{user}/contracts', [UserController::class, 'contracts'])->where('user', $notReserved);
+    });
+
+    Route::prefix('meetings')->group(function () {
+        Route::get('/',               [MeetingController::class, 'index']);
+        Route::get('/{meeting}',      [MeetingController::class, 'show']);
+        Route::post('/',              [MeetingController::class, 'store']);
+        Route::put('/{meeting}',      [MeetingController::class, 'update']);
+        Route::patch('/{meeting}',    [MeetingController::class, 'update']);
+        Route::delete('/{meeting}',   [MeetingController::class, 'destroy']);
+
+        Route::post('/{meeting}/slots',        [MeetingController::class, 'addSlots']);
+        Route::post('/{meeting}/select-slot',  [MeetingController::class, 'selectSlot']);
     });
 
 

@@ -48,54 +48,7 @@ class UserController extends Controller
      *   @OA\Parameter(name="include", in="query", description="Relations CSV (ex: role,currentSubscription,subscriptions,bookings,receivedBookings,serviceOfferings,reviews)", @OA\Schema(type="string")),
      *   @OA\Parameter(name="sort", in="query", description="CSV ex: first_name,-created_at", @OA\Schema(type="string")),
      *   @OA\Parameter(name="per_page", in="query", description="Taille de page ex: 15 ou 'all'", @OA\Schema(type="string")),
-     *   @OA\Response(
-     *     response=200,
-     *     description="OK",
-     *     @OA\JsonContent(
-     *       oneOf={
-     *         @OA\Schema(
-     *           type="object",
-     *           @OA\Property(property="success", type="boolean", example=true),
-     *           @OA\Property(property="message", type="string", example="Liste des utilisateurs récupérée"),
-     *           @OA\Property(
-     *             property="data",
-     *             type="object",
-     *             @OA\Property(property="current_page", type="integer", example=1),
-     *             @OA\Property(property="per_page", type="integer", example=15),
-     *             @OA\Property(property="total", type="integer", example=120),
-     *             @OA\Property(property="last_page", type="integer", example=8),
-     *             @OA\Property(
-     *               property="data",
-     *               type="array",
-     *               @OA\Items(type="object",
-     *                 example={"id":1,"first_name":"Alice","last_name":"Dupont","email":"alice@example.com"}
-     *               )
-     *             )
-     *           ),
-     *           @OA\Property(
-     *             property="meta",
-     *             type="object",
-     *             @OA\Property(property="current_page", type="integer", example=1),
-     *             @OA\Property(property="per_page", type="integer", example=15),
-     *             @OA\Property(property="total", type="integer", example=120),
-     *             @OA\Property(property="last_page", type="integer", example=8)
-     *           )
-     *         ),
-     *         @OA\Schema(
-     *           type="object",
-     *           @OA\Property(property="success", type="boolean", example=true),
-     *           @OA\Property(property="message", type="string", example="Liste des utilisateurs récupérée"),
-     *           @OA\Property(
-     *             property="data",
-     *             type="array",
-     *             @OA\Items(type="object",
-     *               example={"id":1,"first_name":"Alice","last_name":"Dupont","email":"alice@example.com"}
-     *             )
-     *           )
-     *         )
-     *       }
-     *     )
-     *   ),
+     *   @OA\Response(response=200, description="OK"),
      *   @OA\Response(response=401, description="Unauthenticated")
      * )
      */
@@ -129,7 +82,7 @@ class UserController extends Controller
         }
 
         if ($request->filled('q')) {
-            $kw = $request->get('q');
+            $kw = trim($request->get('q'));
             $query->where(function ($sub) use ($kw) {
                 $sub->where('first_name', 'like', "%{$kw}%")
                     ->orWhere('last_name', 'like', "%{$kw}%")
@@ -169,7 +122,7 @@ class UserController extends Controller
         if ($request->get('per_page') === 'all') {
             $users = $query->get();
         } else {
-            $perPage = (int)($request->get('per_page', 15));
+            $perPage = max(1, (int)($request->get('per_page', 15)));
             $users = $query->paginate($perPage);
         }
 
@@ -185,20 +138,7 @@ class UserController extends Controller
      *   security={{"bearerAuth":{}}},
      *   @OA\Parameter(name="user", in="path", required=true, description="ID ou email", @OA\Schema(type="string")),
      *   @OA\Parameter(name="include", in="query", description="Relations CSV", @OA\Schema(type="string")),
-     *   @OA\Response(
-     *     response=200,
-     *     description="OK",
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="success", type="boolean", example=true),
-     *       @OA\Property(property="message", type="string", example="Détails complets de l’utilisateur récupérés"),
-     *       @OA\Property(property="data", type="array",
-     *         @OA\Items(type="object",
-     *           example={"id":1,"first_name":"Alice","last_name":"Dupont","email":"alice@example.com"}
-     *         )
-     *       )
-     *     )
-     *   ),
+     *   @OA\Response(response=200, description="OK"),
      *   @OA\Response(response=401, description="Unauthenticated"),
      *   @OA\Response(response=404, description="Not Found")
      * )
@@ -210,7 +150,7 @@ class UserController extends Controller
             $user->load($includes);
         }
 
-        return response()->success([$user->toArray()], 'Détails complets de l’utilisateur récupérés');
+        return response()->success($user, 'Détails complets de l’utilisateur récupérés');
     }
 
     /**
@@ -219,53 +159,8 @@ class UserController extends Controller
      *   tags={"Users"},
      *   summary="Créer un utilisateur",
      *   security={{"bearerAuth":{}}},
-     *   @OA\RequestBody(
-     *     required=true,
-     *     @OA\JsonContent(
-     *       type="object",
-     *       required={"first_name","last_name","email","password","account_type","role_id"},
-     *       @OA\Property(property="first_name", type="string", maxLength=255, example="Alice"),
-     *       @OA\Property(property="last_name", type="string", maxLength=255, example="Dupont"),
-     *       @OA\Property(property="email", type="string", format="email", example="alice@example.com"),
-     *       @OA\Property(property="password", type="string", minLength=6, example="secret123"),
-     *       @OA\Property(property="phone", type="string", nullable=true, example="+237670000000"),
-     *       @OA\Property(property="preferred_language", type="string", nullable=true, example="fr"),
-     *       @OA\Property(property="country", type="string", maxLength=2, nullable=true, example="CM"),
-     *       @OA\Property(property="account_type", type="string", enum={"entreprise","particulier"}, example="particulier"),
-     *       @OA\Property(property="role_id", type="integer", example=2),
-     *       @OA\Property(property="gender", type="string", enum={"Homme","Femme","Autre"}, nullable=true),
-     *       @OA\Property(property="birthdate", type="string", format="date", nullable=true, example="1990-05-21"),
-     *       @OA\Property(property="job", type="string", nullable=true, example="Ingénieur"),
-     *       @OA\Property(property="personal_address", type="string", nullable=true, example="Bonamoussadi, Douala"),
-     *       @OA\Property(property="user_type", type="string", enum={"client","prestataire"}, nullable=true),
-     *       @OA\Property(property="company_name", type="string", nullable=true),
-     *       @OA\Property(property="sector", type="string", nullable=true),
-     *       @OA\Property(property="tax_number", type="string", nullable=true),
-     *       @OA\Property(property="website", type="string", nullable=true, example="https://exemple.com"),
-     *       @OA\Property(property="company_logo", type="string", nullable=true),
-     *       @OA\Property(property="company_description", type="string", nullable=true),
-     *       @OA\Property(property="company_address", type="string", nullable=true),
-     *       @OA\Property(property="company_city", type="string", nullable=true),
-     *       @OA\Property(property="company_size", type="string", nullable=true),
-     *       @OA\Property(property="preferred_contact_method", type="string", nullable=true),
-     *       @OA\Property(property="accepts_terms", type="boolean", example=true),
-     *       @OA\Property(property="wants_newsletter", type="boolean", example=false)
-     *     )
-     *   ),
-     *   @OA\Response(
-     *     response=200,
-     *     description="Créé",
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="success", type="boolean", example=true),
-     *       @OA\Property(property="message", type="string", example="Utilisateur créé avec succès"),
-     *       @OA\Property(
-     *         property="data",
-     *         type="array",
-     *         @OA\Items(type="object", example={"id":1,"first_name":"Alice","last_name":"Dupont","email":"alice@example.com"})
-     *       )
-     *     )
-     *   ),
+     *   @OA\RequestBody(required=true),
+     *   @OA\Response(response=200, description="Créé"),
      *   @OA\Response(response=422, description="Validation error"),
      *   @OA\Response(response=401, description="Unauthenticated")
      * )
@@ -303,7 +198,7 @@ class UserController extends Controller
 
         $user = User::create($data);
 
-        return response()->success([$user->toArray()], 'Utilisateur créé avec succès');
+        return response()->success($user, 'Utilisateur créé avec succès');
     }
 
     /**
@@ -313,50 +208,8 @@ class UserController extends Controller
      *   summary="Mettre à jour un utilisateur",
      *   security={{"bearerAuth":{}}},
      *   @OA\Parameter(name="user", in="path", required=true, @OA\Schema(type="string")),
-     *   @OA\RequestBody(
-     *     required=true,
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="first_name", type="string", nullable=true),
-     *       @OA\Property(property="last_name", type="string", nullable=true),
-     *       @OA\Property(property="email", type="string", format="email", nullable=true),
-     *       @OA\Property(property="password", type="string", minLength=6, nullable=true),
-     *       @OA\Property(property="phone", type="string", nullable=true),
-     *       @OA\Property(property="preferred_language", type="string", nullable=true),
-     *       @OA\Property(property="country", type="string", maxLength=2, nullable=true),
-     *       @OA\Property(property="account_type", type="string", enum={"entreprise","particulier"}, nullable=true),
-     *       @OA\Property(property="role_id", type="integer", nullable=true),
-     *       @OA\Property(property="gender", type="string", enum={"Homme","Femme","Autre"}, nullable=true),
-     *       @OA\Property(property="birthdate", type="string", format="date", nullable=true),
-     *       @OA\Property(property="job", type="string", nullable=true),
-     *       @OA\Property(property="personal_address", type="string", nullable=true),
-     *       @OA\Property(property="user_type", type="string", enum={"client","prestataire"}, nullable=true),
-     *       @OA\Property(property="company_name", type="string", nullable=true),
-     *       @OA\Property(property="sector", type="string", nullable=true),
-     *       @OA\Property(property="tax_number", type="string", nullable=true),
-     *       @OA\Property(property="website", type="string", nullable=true),
-     *       @OA\Property(property="company_logo", type="string", nullable=true),
-     *       @OA\Property(property="company_description", type="string", nullable=true),
-     *       @OA\Property(property="company_address", type="string", nullable=true),
-     *       @OA\Property(property="company_city", type="string", nullable=true),
-     *       @OA\Property(property="company_size", type="string", nullable=true),
-     *       @OA\Property(property="preferred_contact_method", type="string", nullable=true),
-     *       @OA\Property(property="accepts_terms", type="boolean", nullable=true),
-     *       @OA\Property(property="wants_newsletter", type="boolean", nullable=true)
-     *     )
-     *   ),
-     *   @OA\Response(
-     *     response=200,
-     *     description="OK",
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="success", type="boolean", example=true),
-     *       @OA\Property(property="message", type="string", example="Utilisateur mis à jour avec succès"),
-     *       @OA\Property(property="data", type="array",
-     *         @OA\Items(type="object", example={"id":1,"first_name":"Alice","last_name":"Dupont","email":"alice@example.com"})
-     *       )
-     *     )
-     *   ),
+     *   @OA\RequestBody(required=true),
+     *   @OA\Response(response=200, description="OK"),
      *   @OA\Response(response=422, description="Validation error"),
      *   @OA\Response(response=401, description="Unauthenticated"),
      *   @OA\Response(response=404, description="Not Found")
@@ -367,50 +220,8 @@ class UserController extends Controller
      *   summary="Mettre à jour un utilisateur (PUT)",
      *   security={{"bearerAuth":{}}},
      *   @OA\Parameter(name="user", in="path", required=true, @OA\Schema(type="string")),
-     *   @OA\RequestBody(
-     *     required=true,
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="first_name", type="string", nullable=true),
-     *       @OA\Property(property="last_name", type="string", nullable=true),
-     *       @OA\Property(property="email", type="string", format="email", nullable=true),
-     *       @OA\Property(property="password", type="string", minLength=6, nullable=true),
-     *       @OA\Property(property="phone", type="string", nullable=true),
-     *       @OA\Property(property="preferred_language", type="string", nullable=true),
-     *       @OA\Property(property="country", type="string", maxLength=2, nullable=true),
-     *       @OA\Property(property="account_type", type="string", enum={"entreprise","particulier"}, nullable=true),
-     *       @OA\Property(property="role_id", type="integer", nullable=true),
-     *       @OA\Property(property="gender", type="string", enum={"Homme","Femme","Autre"}, nullable=true),
-     *       @OA\Property(property="birthdate", type="string", format="date", nullable=true),
-     *       @OA\Property(property="job", type="string", nullable=true),
-     *       @OA\Property(property="personal_address", type="string", nullable=true),
-     *       @OA\Property(property="user_type", type="string", enum={"client","prestataire"}, nullable=true),
-     *       @OA\Property(property="company_name", type="string", nullable=true),
-     *       @OA\Property(property="sector", type="string", nullable=true),
-     *       @OA\Property(property="tax_number", type="string", nullable=true),
-     *       @OA\Property(property="website", type="string", nullable=true),
-     *       @OA\Property(property="company_logo", type="string", nullable=true),
-     *       @OA\Property(property="company_description", type="string", nullable=true),
-     *       @OA\Property(property="company_address", type="string", nullable=true),
-     *       @OA\Property(property="company_city", type="string", nullable=true),
-     *       @OA\Property(property="company_size", type="string", nullable=true),
-     *       @OA\Property(property="preferred_contact_method", type="string", nullable=true),
-     *       @OA\Property(property="accepts_terms", type="boolean", nullable=true),
-     *       @OA\Property(property="wants_newsletter", type="boolean", nullable=true)
-     *     )
-     *   ),
-     *   @OA\Response(
-     *     response=200,
-     *     description="OK",
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="success", type="boolean", example=true),
-     *       @OA\Property(property="message", type="string", example="Utilisateur mis à jour avec succès"),
-     *       @OA\Property(property="data", type="array",
-     *         @OA\Items(type="object", example={"id":1,"first_name":"Alice","last_name":"Dupont","email":"alice@example.com"})
-     *       )
-     *     )
-     *   ),
+     *   @OA\RequestBody(required=true),
+     *   @OA\Response(response=200, description="OK"),
      *   @OA\Response(response=422, description="Validation error"),
      *   @OA\Response(response=401, description="Unauthenticated"),
      *   @OA\Response(response=404, description="Not Found")
@@ -453,7 +264,7 @@ class UserController extends Controller
 
         $user->fill($data)->save();
 
-        return response()->success([$user->fresh()->toArray()], 'Utilisateur mis à jour avec succès');
+        return response()->success($user->fresh(), 'Utilisateur mis à jour avec succès');
     }
 
     /**
@@ -462,17 +273,7 @@ class UserController extends Controller
      *   tags={"Users"},
      *   summary="Supprimer un utilisateur",
      *   security={{"bearerAuth":{}}},
-     *   @OA\Parameter(name="user", in="path", required=true, @OA\Schema(type="string")),
-     *   @OA\Response(
-     *     response=200,
-     *     description="Supprimé",
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="success", type="boolean", example=true),
-     *       @OA\Property(property="message", type="string", example="Utilisateur supprimé"),
-     *       @OA\Property(property="data", nullable=true)
-     *     )
-     *   ),
+     *   @OA\Response(response=200, description="Supprimé"),
      *   @OA\Response(response=401, description="Unauthenticated"),
      *   @OA\Response(response=404, description="Not Found")
      * )
@@ -489,35 +290,7 @@ class UserController extends Controller
      *   tags={"Users"},
      *   summary="Réservations d'un utilisateur",
      *   security={{"bearerAuth":{}}},
-     *   @OA\Parameter(name="user", in="path", required=true, @OA\Schema(type="string")),
-     *   @OA\Parameter(name="as", in="query", description="client|provider (défaut: client)", @OA\Schema(type="string", enum={"client","provider"})),
-     *   @OA\Parameter(name="status", in="query", @OA\Schema(type="string")),
-     *   @OA\Parameter(name="payment_status", in="query", @OA\Schema(type="string")),
-     *   @OA\Parameter(name="per_page", in="query", @OA\Schema(type="string")),
-     *   @OA\Response(
-     *     response=200,
-     *     description="OK",
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="success", type="boolean", example=true),
-     *       @OA\Property(property="message", type="string", example="Réservations récupérées"),
-     *       @OA\Property(
-     *         property="data",
-     *         type="object",
-     *         @OA\Property(
-     *           property="data",
-     *           type="array",
-     *           @OA\Items(type="object",
-     *             example={"id":10,"status":"confirmed","payment_status":"paid","start_at":"2025-08-10 10:00:00"}
-     *           )
-     *         ),
-     *         @OA\Property(property="current_page", type="integer", example=1),
-     *         @OA\Property(property="per_page", type="integer", example=15),
-     *         @OA\Property(property="total", type="integer", example=30),
-     *         @OA\Property(property="last_page", type="integer", example=2)
-     *       )
-     *     )
-     *   ),
+     *   @OA\Response(response=200, description="OK"),
      *   @OA\Response(response=401, description="Unauthenticated"),
      *   @OA\Response(response=404, description="Not Found")
      * )
@@ -541,9 +314,10 @@ class UserController extends Controller
         }
 
         $query->orderBy('start_at', 'desc');
+
         $items = $request->get('per_page') === 'all'
             ? $query->get()
-            : $query->paginate((int)$request->get('per_page', 15));
+            : $query->paginate(max(1, (int)$request->get('per_page', 15)));
 
         return response()->success($items, 'Réservations récupérées');
     }
@@ -554,34 +328,7 @@ class UserController extends Controller
      *   tags={"Users"},
      *   summary="Services offerts par un prestataire/entreprise",
      *   security={{"bearerAuth":{}}},
-     *   @OA\Parameter(name="user", in="path", required=true, @OA\Schema(type="string")),
-     *   @OA\Parameter(name="status", in="query", @OA\Schema(type="string")),
-     *   @OA\Parameter(name="city", in="query", @OA\Schema(type="string")),
-     *   @OA\Parameter(name="per_page", in="query", @OA\Schema(type="string")),
-     *   @OA\Response(
-     *     response=200,
-     *     description="OK",
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="success", type="boolean", example=true),
-     *       @OA\Property(property="message", type="string", example="Services offerts récupérés"),
-     *       @OA\Property(
-     *         property="data",
-     *         type="object",
-     *         @OA\Property(
-     *           property="data",
-     *           type="array",
-     *           @OA\Items(type="object",
-     *             example={"id":5,"title":"Nettoyage industriel","status":"published","city":"Douala"}
-     *           )
-     *         ),
-     *         @OA\Property(property="current_page", type="integer", example=1),
-     *         @OA\Property(property="per_page", type="integer", example=15),
-     *         @OA\Property(property="total", type="integer", example=12),
-     *         @OA\Property(property="last_page", type="integer", example=1)
-     *       )
-     *     )
-     *   ),
+     *   @OA\Response(response=200, description="OK"),
      *   @OA\Response(response=401, description="Unauthenticated"),
      *   @OA\Response(response=404, description="Not Found")
      * )
@@ -601,7 +348,7 @@ class UserController extends Controller
 
         $items = $request->get('per_page') === 'all'
             ? $query->get()
-            : $query->paginate((int)$request->get('per_page', 15));
+            : $query->paginate(max(1, (int)$request->get('per_page', 15)));
 
         return response()->success($items, 'Services offerts récupérés');
     }
@@ -613,34 +360,7 @@ class UserController extends Controller
      *   summary="Avis liés à un utilisateur",
      *   description="as=received (avis reçus) | as=given (avis donnés)",
      *   security={{"bearerAuth":{}}},
-     *   @OA\Parameter(name="user", in="path", required=true, @OA\Schema(type="string")),
-     *   @OA\Parameter(name="as", in="query", @OA\Schema(type="string", enum={"received","given"})),
-     *   @OA\Parameter(name="rating_min", in="query", @OA\Schema(type="number", format="float")),
-     *   @OA\Parameter(name="per_page", in="query", @OA\Schema(type="string")),
-     *   @OA\Response(
-     *     response=200,
-     *     description="OK",
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="success", type="boolean", example=true),
-     *       @OA\Property(property="message", type="string", example="Avis récupérés"),
-     *       @OA\Property(
-     *         property="data",
-     *         type="object",
-     *         @OA\Property(
-     *           property="data",
-     *           type="array",
-     *           @OA\Items(type="object",
-     *             example={"id":3,"rating":4.5,"comment":"Très pro","provider_id":2,"author_id":5}
-     *           )
-     *         ),
-     *         @OA\Property(property="current_page", type="integer", example=1),
-     *         @OA\Property(property="per_page", type="integer", example=15),
-     *         @OA\Property(property="total", type="integer", example=7),
-     *         @OA\Property(property="last_page", type="integer", example=1)
-     *       )
-     *     )
-     *   ),
+     *   @OA\Response(response=200, description="OK"),
      *   @OA\Response(response=401, description="Unauthenticated"),
      *   @OA\Response(response=404, description="Not Found")
      * )
@@ -664,7 +384,7 @@ class UserController extends Controller
 
         $items = $request->get('per_page') === 'all'
             ? $query->get()
-            : $query->paginate((int)$request->get('per_page', 15));
+            : $query->paginate(max(1, (int)$request->get('per_page', 15)));
 
         return response()->success($items, 'Avis récupérés');
     }
@@ -675,34 +395,7 @@ class UserController extends Controller
      *   tags={"Users"},
      *   summary="Créneaux de disponibilité d'un prestataire",
      *   security={{"bearerAuth":{}}},
-     *   @OA\Parameter(name="user", in="path", required=true, @OA\Schema(type="string")),
-     *   @OA\Parameter(name="from", in="query", @OA\Schema(type="string", format="date")),
-     *   @OA\Parameter(name="to", in="query", @OA\Schema(type="string", format="date")),
-     *   @OA\Parameter(name="per_page", in="query", @OA\Schema(type="string")),
-     *   @OA\Response(
-     *     response=200,
-     *     description="OK",
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="success", type="boolean", example=true),
-     *       @OA\Property(property="message", type="string", example="Créneaux de disponibilité récupérés"),
-     *       @OA\Property(
-     *         property="data",
-     *         type="object",
-     *         @OA\Property(
-     *           property="data",
-     *           type="array",
-     *           @OA\Items(type="object",
-     *             example={"id":9,"provider_id":2,"start_at":"2025-08-20 09:00:00","end_at":"2025-08-20 12:00:00"}
-     *           )
-     *         ),
-     *         @OA\Property(property="current_page", type="integer", example=1),
-     *         @OA\Property(property="per_page", type="integer", example=50),
-     *         @OA\Property(property="total", type="integer", example=20),
-     *         @OA\Property(property="last_page", type="integer", example=1)
-     *       )
-     *     )
-     *   ),
+     *   @OA\Response(response=200, description="OK"),
      *   @OA\Response(response=401, description="Unauthenticated"),
      *   @OA\Response(response=404, description="Not Found")
      * )
@@ -722,7 +415,7 @@ class UserController extends Controller
 
         $items = $request->get('per_page') === 'all'
             ? $query->get()
-            : $query->paginate((int)$request->get('per_page', 50));
+            : $query->paginate(max(1, (int)$request->get('per_page', 50)));
 
         return response()->success($items, 'Créneaux de disponibilité récupérés');
     }
@@ -733,29 +426,7 @@ class UserController extends Controller
      *   tags={"Users"},
      *   summary="Uploader/Mettre à jour l'avatar",
      *   security={{"bearerAuth":{}}},
-     *   @OA\Parameter(name="user", in="path", required=true, @OA\Schema(type="string")),
-     *   @OA\RequestBody(
-     *     required=true,
-     *     @OA\MediaType(
-     *       mediaType="multipart/form-data",
-     *       @OA\Schema(
-     *         required={"avatar"},
-     *         @OA\Property(property="avatar", type="string", format="binary", description="Image (max 2MB)")
-     *       )
-     *     )
-     *   ),
-     *   @OA\Response(
-     *     response=200,
-     *     description="OK",
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="success", type="boolean", example=true),
-     *       @OA\Property(property="message", type="string", example="Avatar mis à jour"),
-     *       @OA\Property(property="data", type="array",
-     *         @OA\Items(type="object", example={"id":1,"profile_photo":"avatars/abc.jpg"})
-     *       )
-     *     )
-     *   ),
+     *   @OA\Response(response=200, description="OK"),
      *   @OA\Response(response=422, description="Validation error"),
      *   @OA\Response(response=401, description="Unauthenticated"),
      *   @OA\Response(response=404, description="Not Found")
@@ -778,7 +449,7 @@ class UserController extends Controller
         $user->profile_photo = $path;
         $user->save();
 
-        return response()->success([$user->fresh()->toArray()], 'Avatar mis à jour');
+        return response()->success($user->fresh(), 'Avatar mis à jour');
     }
 
     /**
@@ -787,28 +458,8 @@ class UserController extends Controller
      *   tags={"Users"},
      *   summary="Changer le mot de passe d'un utilisateur",
      *   security={{"bearerAuth":{}}},
-     *   @OA\Parameter(name="user", in="path", required=true, @OA\Schema(type="string")),
-     *   @OA\RequestBody(
-     *     required=true,
-     *     @OA\JsonContent(
-     *       type="object",
-     *       required={"current_password","new_password"},
-     *       @OA\Property(property="current_password", type="string", example="ancienPass123"),
-     *       @OA\Property(property="new_password", type="string", minLength=6, example="nouveauPass123"),
-     *       @OA\Property(property="new_password_confirmation", type="string", example="nouveauPass123")
-     *     )
-     *   ),
-     *   @OA\Response(
-     *     response=200,
-     *     description="OK",
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="success", type="boolean", example=true),
-     *       @OA\Property(property="message", type="string", example="Mot de passe changé avec succès"),
-     *       @OA\Property(property="data", nullable=true)
-     *     )
-     *   ),
-     *   @OA\Response(response=422, description="Mot de passe actuel incorrect / validation"),
+     *   @OA\Response(response=200, description="OK"),
+     *   @OA\Response(response=422, description="Validation error"),
      *   @OA\Response(response=401, description="Unauthenticated"),
      *   @OA\Response(response=404, description="Not Found")
      * )
@@ -824,7 +475,7 @@ class UserController extends Controller
             return response()->error('Mot de passe actuel incorrect', 422);
         }
 
-        $user->password = $data['new_password'];
+        $user->password = $data['new_password']; // mutator hash
         $user->save();
 
         return response()->success(null, 'Mot de passe changé avec succès');
@@ -836,35 +487,7 @@ class UserController extends Controller
      *   tags={"Users"},
      *   summary="Assigner/Créer un abonnement actif pour un utilisateur",
      *   security={{"bearerAuth":{}}},
-     *   @OA\Parameter(name="user", in="path", required=true, @OA\Schema(type="string")),
-     *   @OA\RequestBody(
-     *     required=true,
-     *     @OA\JsonContent(
-     *       type="object",
-     *       required={"name","commission_type","commission_rate"},
-     *       @OA\Property(property="name", type="string", example="Standard"),
-     *       @OA\Property(property="price", type="number", format="float", nullable=true, example=5000),
-     *       @OA\Property(property="frequency", type="string", enum={"month","year"}, nullable=true, example="month"),
-     *       @OA\Property(property="commission_type", type="string", enum={"percent","flat"}, example="percent"),
-     *       @OA\Property(property="commission_rate", type="number", format="float", example=10),
-     *       @OA\Property(property="started_at", type="string", format="date-time", nullable=true, example="2025-08-10T09:00:00Z"),
-     *       @OA\Property(property="ends_at", type="string", format="date-time", nullable=true, example="2026-08-10T09:00:00Z")
-     *     )
-     *   ),
-     *   @OA\Response(
-     *     response=200,
-     *     description="OK",
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="success", type="boolean", example=true),
-     *       @OA\Property(property="message", type="string", example="Abonnement assigné"),
-     *       @OA\Property(property="data", type="array",
-     *         @OA\Items(type="object",
-     *           example={"id":1,"name":"Standard","frequency":"month","commission_type":"percent","commission_rate":10,"status":"active"}
-     *         )
-     *       )
-     *     )
-     *   ),
+     *   @OA\Response(response=200, description="OK"),
      *   @OA\Response(response=422, description="Validation error"),
      *   @OA\Response(response=401, description="Unauthenticated"),
      *   @OA\Response(response=404, description="Not Found")
@@ -897,7 +520,7 @@ class UserController extends Controller
         $user->subscription_id = $sub->id;
         $user->save();
 
-        return response()->success([$sub->toArray()], 'Abonnement assigné');
+        return response()->success($sub, 'Abonnement assigné');
     }
 
     /**
@@ -906,17 +529,7 @@ class UserController extends Controller
      *   tags={"Users"},
      *   summary="Révoquer l'abonnement courant d'un utilisateur",
      *   security={{"bearerAuth":{}}},
-     *   @OA\Parameter(name="user", in="path", required=true, @OA\Schema(type="string")),
-     *   @OA\Response(
-     *     response=200,
-     *     description="OK",
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="success", type="boolean", example=true),
-     *       @OA\Property(property="message", type="string", example="Abonnement révoqué"),
-     *       @OA\Property(property="data", nullable=true)
-     *     )
-     *   ),
+     *   @OA\Response(response=200, description="OK"),
      *   @OA\Response(response=401, description="Unauthenticated"),
      *   @OA\Response(response=404, description="Not Found")
      * )
@@ -941,21 +554,7 @@ class UserController extends Controller
      *   tags={"Users"},
      *   summary="Profil de l'utilisateur connecté",
      *   security={{"bearerAuth":{}}},
-     *   @OA\Parameter(name="include", in="query", description="Relations CSV", @OA\Schema(type="string")),
-     *   @OA\Response(
-     *     response=200,
-     *     description="OK",
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="success", type="boolean", example=true),
-     *       @OA\Property(property="message", type="string", example="Profil courant"),
-     *       @OA\Property(property="data", type="array",
-     *         @OA\Items(type="object",
-     *           example={"id":1,"first_name":"Alice","last_name":"Dupont","email":"alice@example.com"}
-     *         )
-     *       )
-     *     )
-     *   ),
+     *   @OA\Response(response=200, description="OK"),
      *   @OA\Response(response=401, description="Unauthenticated")
      * )
      */
@@ -971,7 +570,7 @@ class UserController extends Controller
             $auth->load($includes);
         }
 
-        return response()->success([$auth->toArray()], 'Profil courant');
+        return response()->success($auth, 'Profil courant');
     }
 
     /* ============================================================
@@ -1007,23 +606,7 @@ class UserController extends Controller
      *   tags={"Users"},
      *   summary="Lister les rôles disponibles",
      *   security={{"bearerAuth":{}}},
-     *   @OA\Response(
-     *     response=200,
-     *     description="OK",
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="success", type="boolean", example=true),
-     *       @OA\Property(property="message", type="string", example="Rôles récupérés"),
-     *       @OA\Property(
-     *         property="data",
-     *         type="array",
-     *         @OA\Items(type="object",
-     *           @OA\Property(property="id", type="integer", example=1),
-     *           @OA\Property(property="name", type="string", example="admin")
-     *         )
-     *       )
-     *     )
-     *   ),
+     *   @OA\Response(response=200, description="OK"),
      *   @OA\Response(response=401, description="Unauthenticated")
      * )
      */
@@ -1039,22 +622,8 @@ class UserController extends Controller
      *   tags={"Users"},
      *   summary="Lister les administrateurs",
      *   security={{"bearerAuth":{}}},
-     *   @OA\Parameter(name="q", in="query", description="Recherche (first_name,last_name,email)", @OA\Schema(type="string")),
-     *   @OA\Parameter(name="country", in="query", @OA\Schema(type="string", maxLength=2)),
-     *   @OA\Parameter(name="city", in="query", @OA\Schema(type="string")),
-     *   @OA\Parameter(name="include", in="query", description="Relations CSV (ex: role,currentSubscription,subscriptions)", @OA\Schema(type="string")),
-     *   @OA\Parameter(name="sort", in="query", description="CSV ex: first_name,-created_at", @OA\Schema(type="string")),
-     *   @OA\Parameter(name="per_page", in="query", description="Taille de page ex: 15 ou 'all'", @OA\Schema(type="string")),
-     *   @OA\Response(
-     *     response=200,
-     *     description="OK",
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="success", type="boolean", example=true),
-     *       @OA\Property(property="message", type="string", example="Administrateurs récupérés"),
-     *       @OA\Property(property="data", type="object", description="Paginé si per_page ≠ all")
-     *     )
-     *   )
+     *   @OA\Response(response=200, description="OK"),
+     *   @OA\Response(response=401, description="Unauthenticated")
      * )
      */
     public function admins(Request $request)
@@ -1078,7 +647,7 @@ class UserController extends Controller
             });
         }
         if ($request->filled('q')) {
-            $kw = $request->get('q');
+            $kw = trim($request->get('q'));
             $query->where(function ($sub) use ($kw) {
                 $sub->where('first_name', 'like', "%{$kw}%")
                     ->orWhere('last_name', 'like', "%{$kw}%")
@@ -1104,7 +673,7 @@ class UserController extends Controller
 
         $items = $request->get('per_page') === 'all'
             ? $query->get()
-            : $query->paginate((int) $request->get('per_page', 15));
+            : $query->paginate(max(1, (int) $request->get('per_page', 15)));
 
         return response()->success($items, 'Administrateurs récupérés');
     }
@@ -1115,22 +684,8 @@ class UserController extends Controller
      *   tags={"Users"},
      *   summary="Lister les comptes de type entreprise",
      *   security={{"bearerAuth":{}}},
-     *   @OA\Parameter(name="q", in="query", description="Recherche (first_name,last_name,email,company_name)", @OA\Schema(type="string")),
-     *   @OA\Parameter(name="country", in="query", @OA\Schema(type="string", maxLength=2)),
-     *   @OA\Parameter(name="city", in="query", @OA\Schema(type="string")),
-     *   @OA\Parameter(name="include", in="query", description="Relations CSV (ex: role,currentSubscription,subscriptions)", @OA\Schema(type="string")),
-     *   @OA\Parameter(name="sort", in="query", description="CSV ex: company_name,-created_at", @OA\Schema(type="string")),
-     *   @OA\Parameter(name="per_page", in="query", description="Taille de page ex: 15 ou 'all'", @OA\Schema(type="string")),
-     *   @OA\Response(
-     *     response=200,
-     *     description="OK",
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="success", type="boolean", example=true),
-     *       @OA\Property(property="message", type="string", example="Entreprises récupérées"),
-     *       @OA\Property(property="data", type="object", description="Paginé si per_page ≠ all")
-     *     )
-     *   )
+     *   @OA\Response(response=200, description="OK"),
+     *   @OA\Response(response=401, description="Unauthenticated")
      * )
      */
     public function entreprises(Request $request)
@@ -1139,9 +694,8 @@ class UserController extends Controller
 
         $query = User::query()
             ->with($includes)
-            ->whereHas('role', function ($q) {
-                $q->where('name', 'entreprise');
-            });
+            // ✅ filtre par type de compte (pas par rôle)
+            ->where('account_type', 'entreprise');
 
         if ($request->filled('country')) {
             $query->where('country', $request->get('country'));
@@ -1154,7 +708,7 @@ class UserController extends Controller
             });
         }
         if ($request->filled('q')) {
-            $kw = $request->get('q');
+            $kw = trim($request->get('q'));
             $query->where(function ($sub) use ($kw) {
                 $sub->where('first_name', 'like', "%{$kw}%")
                     ->orWhere('last_name', 'like', "%{$kw}%")
@@ -1181,7 +735,7 @@ class UserController extends Controller
 
         $items = $request->get('per_page') === 'all'
             ? $query->get()
-            : $query->paginate((int) $request->get('per_page', 15));
+            : $query->paginate(max(1, (int) $request->get('per_page', 15)));
 
         return response()->success($items, 'Entreprises récupérées');
     }
@@ -1192,15 +746,8 @@ class UserController extends Controller
      *   tags={"Users"},
      *   summary="Lister les prestataires",
      *   security={{"bearerAuth":{}}},
-     *   @OA\Parameter(name="q", in="query", description="Recherche (first_name,last_name,email,company_name)", @OA\Schema(type="string")),
-     *   @OA\Parameter(name="country", in="query", @OA\Schema(type="string", maxLength=2)),
-     *   @OA\Parameter(name="city", in="query", @OA\Schema(type="string")),
-     *   @OA\Parameter(name="sub_category_id", in="query", description="Filtrer les prestataires qui ont une offre dans cette sous-catégorie", @OA\Schema(type="integer")),
-     *   @OA\Parameter(name="category_id", in="query", description="Filtrer via la catégorie de la sous-catégorie de l'offre", @OA\Schema(type="integer")),
-     *   @OA\Parameter(name="include", in="query", description="Relations CSV (ex: role,currentSubscription,serviceOfferings)", @OA\Schema(type="string")),
-     *   @OA\Parameter(name="sort", in="query", description="CSV ex: first_name,-created_at", @OA\Schema(type="string")),
-     *   @OA\Parameter(name="per_page", in="query", description="Taille de page ex: 15 ou 'all'", @OA\Schema(type="string")),
-     *   @OA\Response(response=200, description="OK")
+     *   @OA\Response(response=200, description="OK"),
+     *   @OA\Response(response=401, description="Unauthenticated")
      * )
      */
     public function prestataires(Request $request)
@@ -1225,7 +772,7 @@ class UserController extends Controller
             });
         }
         if ($request->filled('q')) {
-            $kw = $request->get('q');
+            $kw = trim($request->get('q'));
             $query->where(function ($sub) use ($kw) {
                 $sub->where('first_name', 'like', "%{$kw}%")
                     ->orWhere('last_name', 'like', "%{$kw}%")
@@ -1273,8 +820,135 @@ class UserController extends Controller
         // Pagination
         $items = $request->get('per_page') === 'all'
             ? $query->get()
-            : $query->paginate((int) $request->get('per_page', 15));
+            : $query->paginate(max(1, (int) $request->get('per_page', 15)));
 
         return response()->success($items, 'Prestataires récupérés');
     }
+    /**
+     * @OA\Get(
+     *   path="/api/users/{user}/meetings",
+     *   tags={"Users","Meetings"},
+     *   summary="Meetings liés à un utilisateur (provider ou client)",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="user", in="path", required=true, @OA\Schema(type="string")),
+     *   @OA\Parameter(name="as", in="query", description="provider|client|any", @OA\Schema(type="string", enum={"provider","client","any"})),
+     *   @OA\Parameter(name="status", in="query", @OA\Schema(type="string")),
+     *   @OA\Parameter(name="from", in="query", description="Filtre sur le selectedSlot.start_at ≥ from (YYYY-MM-DD)", @OA\Schema(type="string", format="date")),
+     *   @OA\Parameter(name="to", in="query", description="Filtre sur le selectedSlot.start_at ≤ to (YYYY-MM-DD)", @OA\Schema(type="string", format="date")),
+     *   @OA\Parameter(name="include", in="query", description="CSV: selectedSlot,slots,notes,contract", @OA\Schema(type="string")),
+     *   @OA\Parameter(name="per_page", in="query", @OA\Schema(type="string")),
+     *   @OA\Response(response=200, description="OK")
+     * )
+     */
+    public function meetings(Request $request, User $user)
+    {
+        // includes sécurisés
+        $allowed = ['selectedSlot','slots','notes','contract'];
+        $include = $request->get('include');
+        $with = ['selectedSlot']; // par défaut on renvoie le créneau choisi
+        if ($include) {
+            $parts = array_filter(array_map('trim', explode(',', $include)));
+            $with = array_values(array_unique(array_merge($with, array_intersect($parts, $allowed))));
+        }
+
+        $q = Meeting::query()->with($with);
+
+        // scope par rôle
+        $as = $request->get('as', 'any');
+        if ($as === 'provider') {
+            $q->where('provider_id', $user->id);
+        } elseif ($as === 'client') {
+            $q->where('client_id', $user->id);
+        } else {
+            $q->where(function ($w) use ($user) {
+                $w->where('provider_id', $user->id)->orWhere('client_id', $user->id);
+            });
+        }
+
+        // filtres
+        if ($request->filled('status')) {
+            $q->where('status', $request->get('status'));
+        }
+
+        // fenêtre de dates sur le selectedSlot.start_at si présent
+        $from = $request->get('from');
+        $to   = $request->get('to');
+        if ($from || $to) {
+            $q->whereHas('selectedSlot', function ($w) use ($from, $to) {
+                if ($from) $w->whereDate('start_at', '>=', $from);
+                if ($to)   $w->whereDate('start_at', '<=', $to);
+            });
+            // tri naturel par horaire si on filtre par dates
+            $q->orderBy(
+                MeetingSlot::query()
+                    ->select('start_at')
+                    ->whereColumn('meeting_slots.id', 'meetings.selected_slot_id')
+                    ->limit(1)
+            );
+        } else {
+            $q->orderBy('created_at', 'desc');
+        }
+
+        $items = $request->get('per_page') === 'all'
+            ? $q->get()
+            : $q->paginate(max(1, (int)$request->get('per_page', 15)));
+
+        return response()->success($items, 'Meetings récupérés');
+    }
+
+    /**
+     * @OA\Get(
+     *   path="/api/users/{user}/contracts",
+     *   tags={"Users","Contracts"},
+     *   summary="Contrats liés à un utilisateur (provider ou client)",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="user", in="path", required=true, @OA\Schema(type="string")),
+     *   @OA\Parameter(name="as", in="query", description="provider|client|any", @OA\Schema(type="string", enum={"provider","client","any"})),
+     *   @OA\Parameter(name="status", in="query", @OA\Schema(type="string",
+     *       enum={"draft","sent","partially_signed","signed","cancelled","expired"})),
+     *   @OA\Parameter(name="include", in="query", description="CSV: template,parties,signatures,events,meeting", @OA\Schema(type="string")),
+     *   @OA\Parameter(name="per_page", in="query", @OA\Schema(type="string")),
+     *   @OA\Response(response=200, description="OK")
+     * )
+     */
+    public function contracts(Request $request, User $user)
+    {
+        // includes sécurisés
+        $allowed = ['template','parties','signatures','events','meeting'];
+        $include = $request->get('include');
+        $with = ['template']; // défaut utile
+        if ($include) {
+            $parts = array_filter(array_map('trim', explode(',', $include)));
+            $with = array_values(array_unique(array_merge($with, array_intersect($parts, $allowed))));
+        }
+
+        $q = Contract::query()->with($with);
+
+        // scope par rôle
+        $as = $request->get('as', 'any');
+        if ($as === 'provider') {
+            $q->where('provider_id', $user->id);
+        } elseif ($as === 'client') {
+            $q->where('client_id', $user->id);
+        } else {
+            $q->where(function ($w) use ($user) {
+                $w->where('provider_id', $user->id)->orWhere('client_id', $user->id);
+            });
+        }
+
+        // filtres
+        if ($request->filled('status')) {
+            $q->where('status', $request->get('status'));
+        }
+
+        // tri
+        $q->orderBy('created_at', 'desc');
+
+        $items = $request->get('per_page') === 'all'
+            ? $q->get()
+            : $q->paginate(max(1, (int)$request->get('per_page', 15)));
+
+        return response()->success($items, 'Contrats récupérés');
+    }
+
 }

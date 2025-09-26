@@ -1028,60 +1028,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "OK"
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "current_page": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "per_page": {
-                                                    "type": "integer",
-                                                    "example": 15
-                                                },
-                                                "total": {
-                                                    "type": "integer",
-                                                    "example": 120
-                                                },
-                                                "last_page": {
-                                                    "type": "integer",
-                                                    "example": 8
-                                                },
-                                                "data": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "object",
-                                                        "example": {
-                                                            "id": 101,
-                                                            "code": "BK-ABC123",
-                                                            "status": "pending",
-                                                            "payment_status": "unpaid",
-                                                            "total_amount": 45000,
-                                                            "currency": "XAF",
-                                                            "start_at": "2025-08-20 09:00:00"
-                                                        }
-                                                    }
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "OK"
                     }
                 }
             },
@@ -1092,107 +1039,11 @@
                 "summary": "Créer une réservation",
                 "operationId": "e33fa5a6507581f9b1e0d710a9a130d1",
                 "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "service_offering_id",
-                                    "client_id",
-                                    "quantity",
-                                    "unit_price"
-                                ],
-                                "properties": {
-                                    "service_offering_id": {
-                                        "type": "integer",
-                                        "example": 10
-                                    },
-                                    "client_id": {
-                                        "type": "integer",
-                                        "example": 25
-                                    },
-                                    "provider_id": {
-                                        "type": "integer",
-                                        "example": 5,
-                                        "nullable": true
-                                    },
-                                    "quantity": {
-                                        "type": "number",
-                                        "format": "float",
-                                        "example": 2
-                                    },
-                                    "unit_price": {
-                                        "type": "number",
-                                        "format": "float",
-                                        "example": 15000
-                                    },
-                                    "tax_rate": {
-                                        "type": "number",
-                                        "format": "float",
-                                        "example": 19.25
-                                    },
-                                    "discount_amount": {
-                                        "type": "number",
-                                        "format": "float",
-                                        "example": 0
-                                    },
-                                    "currency": {
-                                        "type": "string",
-                                        "example": "XAF"
-                                    },
-                                    "start_at": {
-                                        "type": "string",
-                                        "format": "date-time",
-                                        "example": "2025-08-20 09:00:00"
-                                    },
-                                    "end_at": {
-                                        "type": "string",
-                                        "format": "date-time",
-                                        "example": "2025-08-20 10:00:00"
-                                    },
-                                    "city": {
-                                        "type": "string",
-                                        "example": "Douala"
-                                    },
-                                    "address": {
-                                        "type": "string",
-                                        "example": "Bonapriso, Rue X"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
+                    "required": true
                 },
                 "responses": {
                     "201": {
-                        "description": "Créé",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Réservation créée"
-                                        },
-                                        "data": {
-                                            "type": "object",
-                                            "example": {
-                                                "id": 120,
-                                                "code": "BK-7UQZ9K",
-                                                "status": "pending",
-                                                "payment_status": "unpaid"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Créé"
                     },
                     "401": {
                         "description": "Unauthenticated"
@@ -1227,33 +1078,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "OK"
-                                        },
-                                        "data": {
-                                            "type": "object",
-                                            "example": {
-                                                "id": 101,
-                                                "code": "BK-ABC123",
-                                                "status": "confirmed",
-                                                "payment_status": "paid"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "OK"
                     },
                     "404": {
                         "description": "Not Found"
@@ -1277,18 +1102,20 @@
                     }
                 ],
                 "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object"
-                            }
-                        }
-                    }
+                    "required": true
                 },
                 "responses": {
                     "200": {
                         "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "422": {
+                        "description": "Validation error"
                     }
                 },
                 "security": [
@@ -1347,18 +1174,20 @@
                     }
                 ],
                 "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object"
-                            }
-                        }
-                    }
+                    "required": true
                 },
                 "responses": {
                     "200": {
                         "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "422": {
+                        "description": "Validation error"
                     }
                 },
                 "security": [
@@ -1477,7 +1306,7 @@
                         "application/json": {
                             "schema": {
                                 "properties": {
-                                    "reason": {
+                                    "cancelled_reason": {
                                         "type": "string",
                                         "nullable": true
                                     }
@@ -3114,6 +2943,426 @@
                     },
                     "404": {
                         "description": "Invitation introuvable"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/meetings": {
+            "get": {
+                "tags": [
+                    "Meetings"
+                ],
+                "summary": "Lister les meetings",
+                "description": "Filtres, includes, tri et pagination.",
+                "operationId": "3cc686a730c9361cbd5c74c72e1af7c7",
+                "parameters": [
+                    {
+                        "name": "provider_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "client_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "sub_category_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "purpose",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "discovery",
+                                "pre_contract",
+                                "contract_assistance"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "proposed",
+                                "scheduled",
+                                "cancelled",
+                                "completed"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "description": "Filtre sur selectedSlot.start_at ≥ (YYYY-MM-DD)",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "description": "Filtre sur selectedSlot.start_at ≤ (YYYY-MM-DD)",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "include",
+                        "in": "query",
+                        "description": "CSV: selectedSlot,slots,notes,contracts,latestContract",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "created_at|selected_at",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "dir",
+                        "in": "query",
+                        "description": "asc|desc",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Meetings"
+                ],
+                "summary": "Créer un meeting",
+                "operationId": "074c4e67b80887d3284ca8e4d0d2e9a2",
+                "requestBody": {
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Créé"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/meetings/{meeting}": {
+            "get": {
+                "tags": [
+                    "Meetings"
+                ],
+                "summary": "Afficher un meeting",
+                "operationId": "ea4c4ae6563d5ba747def7345671ebb1",
+                "parameters": [
+                    {
+                        "name": "meeting",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "include",
+                        "in": "query",
+                        "description": "CSV: selectedSlot,slots,notes,contracts,latestContract",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Meetings"
+                ],
+                "summary": "Mettre à jour un meeting (PUT)",
+                "operationId": "fffe4dbb8f262a65ae923186bfa98bf9",
+                "parameters": [
+                    {
+                        "name": "meeting",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Meetings"
+                ],
+                "summary": "Supprimer un meeting",
+                "operationId": "73ac7c8891a560678f2df712a5958252",
+                "parameters": [
+                    {
+                        "name": "meeting",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Supprimé"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Meetings"
+                ],
+                "summary": "Mettre à jour un meeting",
+                "operationId": "e228d1bb6db84142e7d7ade129834d5c",
+                "parameters": [
+                    {
+                        "name": "meeting",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/meetings/{meeting}/slots": {
+            "post": {
+                "tags": [
+                    "Meetings"
+                ],
+                "summary": "Ajouter des slots à un meeting",
+                "operationId": "485ab8b6e78b03dfb2c37e14cd2222cb",
+                "parameters": [
+                    {
+                        "name": "meeting",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "slots"
+                                ],
+                                "properties": {
+                                    "slots": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "start_at",
+                                                "end_at"
+                                            ],
+                                            "properties": {
+                                                "start_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "end_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/meetings/{meeting}/select-slot": {
+            "post": {
+                "tags": [
+                    "Meetings"
+                ],
+                "summary": "Sélectionner le slot retenu",
+                "operationId": "f2f4cbb7cdea30d415d0bca40aeef2f3",
+                "parameters": [
+                    {
+                        "name": "meeting",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "slot_id"
+                                ],
+                                "properties": {
+                                    "slot_id": {
+                                        "type": "integer",
+                                        "example": 123
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "422": {
+                        "description": "Validation error"
                     }
                 },
                 "security": [
@@ -6688,107 +6937,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "oneOf": [
-                                        {
-                                            "properties": {
-                                                "success": {
-                                                    "type": "boolean",
-                                                    "example": true
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "example": "Liste des utilisateurs récupérée"
-                                                },
-                                                "data": {
-                                                    "properties": {
-                                                        "current_page": {
-                                                            "type": "integer",
-                                                            "example": 1
-                                                        },
-                                                        "per_page": {
-                                                            "type": "integer",
-                                                            "example": 15
-                                                        },
-                                                        "total": {
-                                                            "type": "integer",
-                                                            "example": 120
-                                                        },
-                                                        "last_page": {
-                                                            "type": "integer",
-                                                            "example": 8
-                                                        },
-                                                        "data": {
-                                                            "type": "array",
-                                                            "items": {
-                                                                "type": "object",
-                                                                "example": {
-                                                                    "id": 1,
-                                                                    "first_name": "Alice",
-                                                                    "last_name": "Dupont",
-                                                                    "email": "alice@example.com"
-                                                                }
-                                                            }
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                },
-                                                "meta": {
-                                                    "properties": {
-                                                        "current_page": {
-                                                            "type": "integer",
-                                                            "example": 1
-                                                        },
-                                                        "per_page": {
-                                                            "type": "integer",
-                                                            "example": 15
-                                                        },
-                                                        "total": {
-                                                            "type": "integer",
-                                                            "example": 120
-                                                        },
-                                                        "last_page": {
-                                                            "type": "integer",
-                                                            "example": 8
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                }
-                                            },
-                                            "type": "object"
-                                        },
-                                        {
-                                            "properties": {
-                                                "success": {
-                                                    "type": "boolean",
-                                                    "example": true
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "example": "Liste des utilisateurs récupérée"
-                                                },
-                                                "data": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "object",
-                                                        "example": {
-                                                            "id": 1,
-                                                            "first_name": "Alice",
-                                                            "last_name": "Dupont",
-                                                            "email": "alice@example.com"
-                                                        }
-                                                    }
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    ]
-                                }
-                            }
-                        }
+                        "description": "OK"
                     },
                     "401": {
                         "description": "Unauthenticated"
@@ -6807,187 +6956,11 @@
                 "summary": "Créer un utilisateur",
                 "operationId": "592819a0265360b2014512d6dbfaf0e7",
                 "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "first_name",
-                                    "last_name",
-                                    "email",
-                                    "password",
-                                    "account_type",
-                                    "role_id"
-                                ],
-                                "properties": {
-                                    "first_name": {
-                                        "type": "string",
-                                        "maxLength": 255,
-                                        "example": "Alice"
-                                    },
-                                    "last_name": {
-                                        "type": "string",
-                                        "maxLength": 255,
-                                        "example": "Dupont"
-                                    },
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "example": "alice@example.com"
-                                    },
-                                    "password": {
-                                        "type": "string",
-                                        "minLength": 6,
-                                        "example": "secret123"
-                                    },
-                                    "phone": {
-                                        "type": "string",
-                                        "example": "+237670000000",
-                                        "nullable": true
-                                    },
-                                    "preferred_language": {
-                                        "type": "string",
-                                        "example": "fr",
-                                        "nullable": true
-                                    },
-                                    "country": {
-                                        "type": "string",
-                                        "maxLength": 2,
-                                        "example": "CM",
-                                        "nullable": true
-                                    },
-                                    "account_type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "entreprise",
-                                            "particulier"
-                                        ],
-                                        "example": "particulier"
-                                    },
-                                    "role_id": {
-                                        "type": "integer",
-                                        "example": 2
-                                    },
-                                    "gender": {
-                                        "type": "string",
-                                        "enum": [
-                                            "Homme",
-                                            "Femme",
-                                            "Autre"
-                                        ],
-                                        "nullable": true
-                                    },
-                                    "birthdate": {
-                                        "type": "string",
-                                        "format": "date",
-                                        "example": "1990-05-21",
-                                        "nullable": true
-                                    },
-                                    "job": {
-                                        "type": "string",
-                                        "example": "Ingénieur",
-                                        "nullable": true
-                                    },
-                                    "personal_address": {
-                                        "type": "string",
-                                        "example": "Bonamoussadi, Douala",
-                                        "nullable": true
-                                    },
-                                    "user_type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "client",
-                                            "prestataire"
-                                        ],
-                                        "nullable": true
-                                    },
-                                    "company_name": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "sector": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "tax_number": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "website": {
-                                        "type": "string",
-                                        "example": "https://exemple.com",
-                                        "nullable": true
-                                    },
-                                    "company_logo": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "company_description": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "company_address": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "company_city": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "company_size": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "preferred_contact_method": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "accepts_terms": {
-                                        "type": "boolean",
-                                        "example": true
-                                    },
-                                    "wants_newsletter": {
-                                        "type": "boolean",
-                                        "example": false
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
+                    "required": true
                 },
                 "responses": {
                     "200": {
-                        "description": "Créé",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Utilisateur créé avec succès"
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "example": {
-                                                    "id": 1,
-                                                    "first_name": "Alice",
-                                                    "last_name": "Dupont",
-                                                    "email": "alice@example.com"
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Créé"
                     },
                     "422": {
                         "description": "Validation error"
@@ -7032,36 +7005,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Détails complets de l’utilisateur récupérés"
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "example": {
-                                                    "id": 1,
-                                                    "first_name": "Alice",
-                                                    "last_name": "Dupont",
-                                                    "email": "alice@example.com"
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "OK"
                     },
                     "401": {
                         "description": "Unauthenticated"
@@ -7093,170 +7037,11 @@
                     }
                 ],
                 "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "first_name": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "last_name": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "nullable": true
-                                    },
-                                    "password": {
-                                        "type": "string",
-                                        "minLength": 6,
-                                        "nullable": true
-                                    },
-                                    "phone": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "preferred_language": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "country": {
-                                        "type": "string",
-                                        "maxLength": 2,
-                                        "nullable": true
-                                    },
-                                    "account_type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "entreprise",
-                                            "particulier"
-                                        ],
-                                        "nullable": true
-                                    },
-                                    "role_id": {
-                                        "type": "integer",
-                                        "nullable": true
-                                    },
-                                    "gender": {
-                                        "type": "string",
-                                        "enum": [
-                                            "Homme",
-                                            "Femme",
-                                            "Autre"
-                                        ],
-                                        "nullable": true
-                                    },
-                                    "birthdate": {
-                                        "type": "string",
-                                        "format": "date",
-                                        "nullable": true
-                                    },
-                                    "job": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "personal_address": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "user_type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "client",
-                                            "prestataire"
-                                        ],
-                                        "nullable": true
-                                    },
-                                    "company_name": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "sector": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "tax_number": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "website": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "company_logo": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "company_description": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "company_address": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "company_city": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "company_size": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "preferred_contact_method": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "accepts_terms": {
-                                        "type": "boolean",
-                                        "nullable": true
-                                    },
-                                    "wants_newsletter": {
-                                        "type": "boolean",
-                                        "nullable": true
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
+                    "required": true
                 },
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Utilisateur mis à jour avec succès"
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "example": {
-                                                    "id": 1,
-                                                    "first_name": "Alice",
-                                                    "last_name": "Dupont",
-                                                    "email": "alice@example.com"
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "OK"
                     },
                     "422": {
                         "description": "Validation error"
@@ -7280,39 +7065,9 @@
                 ],
                 "summary": "Supprimer un utilisateur",
                 "operationId": "e0f9a385a1d6788b99e519bd98cf7239",
-                "parameters": [
-                    {
-                        "name": "user",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "responses": {
                     "200": {
-                        "description": "Supprimé",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Utilisateur supprimé"
-                                        },
-                                        "data": {
-                                            "nullable": true
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Supprimé"
                     },
                     "401": {
                         "description": "Unauthenticated"
@@ -7344,170 +7099,11 @@
                     }
                 ],
                 "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "first_name": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "last_name": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "nullable": true
-                                    },
-                                    "password": {
-                                        "type": "string",
-                                        "minLength": 6,
-                                        "nullable": true
-                                    },
-                                    "phone": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "preferred_language": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "country": {
-                                        "type": "string",
-                                        "maxLength": 2,
-                                        "nullable": true
-                                    },
-                                    "account_type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "entreprise",
-                                            "particulier"
-                                        ],
-                                        "nullable": true
-                                    },
-                                    "role_id": {
-                                        "type": "integer",
-                                        "nullable": true
-                                    },
-                                    "gender": {
-                                        "type": "string",
-                                        "enum": [
-                                            "Homme",
-                                            "Femme",
-                                            "Autre"
-                                        ],
-                                        "nullable": true
-                                    },
-                                    "birthdate": {
-                                        "type": "string",
-                                        "format": "date",
-                                        "nullable": true
-                                    },
-                                    "job": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "personal_address": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "user_type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "client",
-                                            "prestataire"
-                                        ],
-                                        "nullable": true
-                                    },
-                                    "company_name": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "sector": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "tax_number": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "website": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "company_logo": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "company_description": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "company_address": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "company_city": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "company_size": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "preferred_contact_method": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "accepts_terms": {
-                                        "type": "boolean",
-                                        "nullable": true
-                                    },
-                                    "wants_newsletter": {
-                                        "type": "boolean",
-                                        "nullable": true
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
+                    "required": true
                 },
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Utilisateur mis à jour avec succès"
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "example": {
-                                                    "id": 1,
-                                                    "first_name": "Alice",
-                                                    "last_name": "Dupont",
-                                                    "email": "alice@example.com"
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "OK"
                     },
                     "422": {
                         "description": "Validation error"
@@ -7533,102 +7129,9 @@
                 ],
                 "summary": "Réservations d'un utilisateur",
                 "operationId": "e44f695b9973ce53dc092bae989be88b",
-                "parameters": [
-                    {
-                        "name": "user",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "as",
-                        "in": "query",
-                        "description": "client|provider (défaut: client)",
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "client",
-                                "provider"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "status",
-                        "in": "query",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "payment_status",
-                        "in": "query",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Réservations récupérées"
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "data": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "object",
-                                                        "example": {
-                                                            "id": 10,
-                                                            "status": "confirmed",
-                                                            "payment_status": "paid",
-                                                            "start_at": "2025-08-10 10:00:00"
-                                                        }
-                                                    }
-                                                },
-                                                "current_page": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "per_page": {
-                                                    "type": "integer",
-                                                    "example": 15
-                                                },
-                                                "total": {
-                                                    "type": "integer",
-                                                    "example": 30
-                                                },
-                                                "last_page": {
-                                                    "type": "integer",
-                                                    "example": 2
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "OK"
                     },
                     "401": {
                         "description": "Unauthenticated"
@@ -7651,90 +7154,9 @@
                 ],
                 "summary": "Services offerts par un prestataire/entreprise",
                 "operationId": "5e750cfd49b7b0abcf8e92568a5b96ea",
-                "parameters": [
-                    {
-                        "name": "user",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "status",
-                        "in": "query",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "city",
-                        "in": "query",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Services offerts récupérés"
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "data": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "object",
-                                                        "example": {
-                                                            "id": 5,
-                                                            "title": "Nettoyage industriel",
-                                                            "status": "published",
-                                                            "city": "Douala"
-                                                        }
-                                                    }
-                                                },
-                                                "current_page": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "per_page": {
-                                                    "type": "integer",
-                                                    "example": 15
-                                                },
-                                                "total": {
-                                                    "type": "integer",
-                                                    "example": 12
-                                                },
-                                                "last_page": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "OK"
                     },
                     "401": {
                         "description": "Unauthenticated"
@@ -7758,96 +7180,9 @@
                 "summary": "Avis liés à un utilisateur",
                 "description": "as=received (avis reçus) | as=given (avis donnés)",
                 "operationId": "28d7c580974e39ed238c8c75fd3ed073",
-                "parameters": [
-                    {
-                        "name": "user",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "as",
-                        "in": "query",
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "received",
-                                "given"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "rating_min",
-                        "in": "query",
-                        "schema": {
-                            "type": "number",
-                            "format": "float"
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Avis récupérés"
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "data": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "object",
-                                                        "example": {
-                                                            "id": 3,
-                                                            "rating": 4.5,
-                                                            "comment": "Très pro",
-                                                            "provider_id": 2,
-                                                            "author_id": 5
-                                                        }
-                                                    }
-                                                },
-                                                "current_page": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "per_page": {
-                                                    "type": "integer",
-                                                    "example": 15
-                                                },
-                                                "total": {
-                                                    "type": "integer",
-                                                    "example": 7
-                                                },
-                                                "last_page": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "OK"
                     },
                     "401": {
                         "description": "Unauthenticated"
@@ -7870,92 +7205,9 @@
                 ],
                 "summary": "Créneaux de disponibilité d'un prestataire",
                 "operationId": "f7673c2a0dbfd08228a25323cfc13575",
-                "parameters": [
-                    {
-                        "name": "user",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "from",
-                        "in": "query",
-                        "schema": {
-                            "type": "string",
-                            "format": "date"
-                        }
-                    },
-                    {
-                        "name": "to",
-                        "in": "query",
-                        "schema": {
-                            "type": "string",
-                            "format": "date"
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Créneaux de disponibilité récupérés"
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "data": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "object",
-                                                        "example": {
-                                                            "id": 9,
-                                                            "provider_id": 2,
-                                                            "start_at": "2025-08-20 09:00:00",
-                                                            "end_at": "2025-08-20 12:00:00"
-                                                        }
-                                                    }
-                                                },
-                                                "current_page": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "per_page": {
-                                                    "type": "integer",
-                                                    "example": 50
-                                                },
-                                                "total": {
-                                                    "type": "integer",
-                                                    "example": 20
-                                                },
-                                                "last_page": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "OK"
                     },
                     "401": {
                         "description": "Unauthenticated"
@@ -7978,66 +7230,9 @@
                 ],
                 "summary": "Uploader/Mettre à jour l'avatar",
                 "operationId": "c61dede646edfb2607544393ed209c4d",
-                "parameters": [
-                    {
-                        "name": "user",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "multipart/form-data": {
-                            "schema": {
-                                "required": [
-                                    "avatar"
-                                ],
-                                "properties": {
-                                    "avatar": {
-                                        "description": "Image (max 2MB)",
-                                        "type": "string",
-                                        "format": "binary"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Avatar mis à jour"
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "example": {
-                                                    "id": 1,
-                                                    "profile_photo": "avatars/abc.jpg"
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "OK"
                     },
                     "422": {
                         "description": "Validation error"
@@ -8063,71 +7258,12 @@
                 ],
                 "summary": "Changer le mot de passe d'un utilisateur",
                 "operationId": "ffe0f1b5ac2ed63e49ce0a595693851d",
-                "parameters": [
-                    {
-                        "name": "user",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "current_password",
-                                    "new_password"
-                                ],
-                                "properties": {
-                                    "current_password": {
-                                        "type": "string",
-                                        "example": "ancienPass123"
-                                    },
-                                    "new_password": {
-                                        "type": "string",
-                                        "minLength": 6,
-                                        "example": "nouveauPass123"
-                                    },
-                                    "new_password_confirmation": {
-                                        "type": "string",
-                                        "example": "nouveauPass123"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Mot de passe changé avec succès"
-                                        },
-                                        "data": {
-                                            "nullable": true
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "OK"
                     },
                     "422": {
-                        "description": "Mot de passe actuel incorrect / validation"
+                        "description": "Validation error"
                     },
                     "401": {
                         "description": "Unauthenticated"
@@ -8150,111 +7286,9 @@
                 ],
                 "summary": "Assigner/Créer un abonnement actif pour un utilisateur",
                 "operationId": "93116be3e662cf916efd2dba5f827a34",
-                "parameters": [
-                    {
-                        "name": "user",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "name",
-                                    "commission_type",
-                                    "commission_rate"
-                                ],
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "example": "Standard"
-                                    },
-                                    "price": {
-                                        "type": "number",
-                                        "format": "float",
-                                        "example": 5000,
-                                        "nullable": true
-                                    },
-                                    "frequency": {
-                                        "type": "string",
-                                        "enum": [
-                                            "month",
-                                            "year"
-                                        ],
-                                        "example": "month",
-                                        "nullable": true
-                                    },
-                                    "commission_type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "percent",
-                                            "flat"
-                                        ],
-                                        "example": "percent"
-                                    },
-                                    "commission_rate": {
-                                        "type": "number",
-                                        "format": "float",
-                                        "example": 10
-                                    },
-                                    "started_at": {
-                                        "type": "string",
-                                        "format": "date-time",
-                                        "example": "2025-08-10T09:00:00Z",
-                                        "nullable": true
-                                    },
-                                    "ends_at": {
-                                        "type": "string",
-                                        "format": "date-time",
-                                        "example": "2026-08-10T09:00:00Z",
-                                        "nullable": true
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Abonnement assigné"
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "example": {
-                                                    "id": 1,
-                                                    "name": "Standard",
-                                                    "frequency": "month",
-                                                    "commission_type": "percent",
-                                                    "commission_rate": 10,
-                                                    "status": "active"
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "OK"
                     },
                     "422": {
                         "description": "Validation error"
@@ -8280,39 +7314,9 @@
                 ],
                 "summary": "Révoquer l'abonnement courant d'un utilisateur",
                 "operationId": "12de2acf6f141717dc91c2e4e1ebe281",
-                "parameters": [
-                    {
-                        "name": "user",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Abonnement révoqué"
-                                        },
-                                        "data": {
-                                            "nullable": true
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "OK"
                     },
                     "401": {
                         "description": "Unauthenticated"
@@ -8335,48 +7339,9 @@
                 ],
                 "summary": "Profil de l'utilisateur connecté",
                 "operationId": "4917cc84ad78f7572292b07e6fbe4bce",
-                "parameters": [
-                    {
-                        "name": "include",
-                        "in": "query",
-                        "description": "Relations CSV",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Profil courant"
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "example": {
-                                                    "id": 1,
-                                                    "first_name": "Alice",
-                                                    "last_name": "Dupont",
-                                                    "email": "alice@example.com"
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "OK"
                     },
                     "401": {
                         "description": "Unauthenticated"
@@ -8398,40 +7363,7 @@
                 "operationId": "d7d3b1a5de2cd6585bfdb9f45e5e93d2",
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Rôles récupérés"
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer",
-                                                        "example": 1
-                                                    },
-                                                    "name": {
-                                                        "type": "string",
-                                                        "example": "admin"
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "OK"
                     },
                     "401": {
                         "description": "Unauthenticated"
@@ -8451,79 +7383,12 @@
                 ],
                 "summary": "Lister les administrateurs",
                 "operationId": "6bfeb9bfd8df16898f59fbe1382a2950",
-                "parameters": [
-                    {
-                        "name": "q",
-                        "in": "query",
-                        "description": "Recherche (first_name,last_name,email)",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "country",
-                        "in": "query",
-                        "schema": {
-                            "type": "string",
-                            "maxLength": 2
-                        }
-                    },
-                    {
-                        "name": "city",
-                        "in": "query",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "include",
-                        "in": "query",
-                        "description": "Relations CSV (ex: role,currentSubscription,subscriptions)",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "sort",
-                        "in": "query",
-                        "description": "CSV ex: first_name,-created_at",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "description": "Taille de page ex: 15 ou 'all'",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Administrateurs récupérés"
-                                        },
-                                        "data": {
-                                            "description": "Paginé si per_page ≠ all",
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
                     }
                 },
                 "security": [
@@ -8540,79 +7405,12 @@
                 ],
                 "summary": "Lister les comptes de type entreprise",
                 "operationId": "f0ad6250998bbebd7001528fb8a91108",
-                "parameters": [
-                    {
-                        "name": "q",
-                        "in": "query",
-                        "description": "Recherche (first_name,last_name,email,company_name)",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "country",
-                        "in": "query",
-                        "schema": {
-                            "type": "string",
-                            "maxLength": 2
-                        }
-                    },
-                    {
-                        "name": "city",
-                        "in": "query",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "include",
-                        "in": "query",
-                        "description": "Relations CSV (ex: role,currentSubscription,subscriptions)",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "sort",
-                        "in": "query",
-                        "description": "CSV ex: company_name,-created_at",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "description": "Taille de page ex: 15 ou 'all'",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Entreprises récupérées"
-                                        },
-                                        "data": {
-                                            "description": "Paginé si per_page ≠ all",
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
                     }
                 },
                 "security": [
@@ -8629,58 +7427,80 @@
                 ],
                 "summary": "Lister les prestataires",
                 "operationId": "9e515555fd699374f250518b797c62a6",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/users/{user}/meetings": {
+            "get": {
+                "tags": [
+                    "Users",
+                    "Meetings"
+                ],
+                "summary": "Meetings liés à un utilisateur (provider ou client)",
+                "operationId": "6e1d172293aa4eb6e6c6e0077f1ee587",
                 "parameters": [
                     {
-                        "name": "q",
-                        "in": "query",
-                        "description": "Recherche (first_name,last_name,email,company_name)",
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
                         "schema": {
                             "type": "string"
                         }
                     },
                     {
-                        "name": "country",
+                        "name": "as",
                         "in": "query",
+                        "description": "provider|client|any",
                         "schema": {
                             "type": "string",
-                            "maxLength": 2
+                            "enum": [
+                                "provider",
+                                "client",
+                                "any"
+                            ]
                         }
                     },
                     {
-                        "name": "city",
+                        "name": "status",
                         "in": "query",
                         "schema": {
                             "type": "string"
                         }
                     },
                     {
-                        "name": "sub_category_id",
+                        "name": "from",
                         "in": "query",
-                        "description": "Filtrer les prestataires qui ont une offre dans cette sous-catégorie",
+                        "description": "Filtre sur le selectedSlot.start_at ≥ from (YYYY-MM-DD)",
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "date"
                         }
                     },
                     {
-                        "name": "category_id",
+                        "name": "to",
                         "in": "query",
-                        "description": "Filtrer via la catégorie de la sous-catégorie de l'offre",
+                        "description": "Filtre sur le selectedSlot.start_at ≤ to (YYYY-MM-DD)",
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "date"
                         }
                     },
                     {
                         "name": "include",
                         "in": "query",
-                        "description": "Relations CSV (ex: role,currentSubscription,serviceOfferings)",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "sort",
-                        "in": "query",
-                        "description": "CSV ex: first_name,-created_at",
+                        "description": "CSV: selectedSlot,slots,notes,contract",
                         "schema": {
                             "type": "string"
                         }
@@ -8688,7 +7508,79 @@
                     {
                         "name": "per_page",
                         "in": "query",
-                        "description": "Taille de page ex: 15 ou 'all'",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/users/{user}/contracts": {
+            "get": {
+                "tags": [
+                    "Users",
+                    "Contracts"
+                ],
+                "summary": "Contrats liés à un utilisateur (provider ou client)",
+                "operationId": "4f33a59e1c934d6e3b1a654a9b24fbe4",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "as",
+                        "in": "query",
+                        "description": "provider|client|any",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "provider",
+                                "client",
+                                "any"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "draft",
+                                "sent",
+                                "partially_signed",
+                                "signed",
+                                "cancelled",
+                                "expired"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "include",
+                        "in": "query",
+                        "description": "CSV: template,parties,signatures,events,meeting",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
                         "schema": {
                             "type": "string"
                         }
@@ -9227,6 +8119,10 @@
             "description": "Invitations"
         },
         {
+            "name": "Meetings",
+            "description": "Meetings"
+        },
+        {
             "name": "Metrics",
             "description": "Metrics"
         },
@@ -9257,6 +8153,10 @@
         {
             "name": "Users",
             "description": "Users"
+        },
+        {
+            "name": "Contracts",
+            "description": "Contracts"
         }
     ]
 }

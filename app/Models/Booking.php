@@ -29,6 +29,7 @@ class Booking extends Model
         'client_id',
         'provider_id',
         'service_offering_id',
+        'meeting_id',            // ⬅️ lien optionnel vers le meeting d'origine
 
         // Référence
         'code',
@@ -72,7 +73,10 @@ class Booking extends Model
         'total_amount'    => 'decimal:2',
     ];
 
-    /* Relations */
+    /* =========================
+     |        RELATIONS
+     ========================= */
+
     public function client(): BelongsTo
     {
         return $this->belongsTo(User::class, 'client_id');
@@ -88,12 +92,27 @@ class Booking extends Model
         return $this->belongsTo(ServiceOffering::class, 'service_offering_id');
     }
 
-    public function commission()
+    /** Meeting d’origine (rendez-vous de cadrage / assistance contractuelle) */
+    public function meeting(): BelongsTo
+    {
+        return $this->belongsTo(Meeting::class, 'meeting_id');
+    }
+
+    public function commission(): HasOne
     {
         return $this->hasOne(Commission::class);
     }
 
-    /* Scopes */
+    /** Créneau réservé (facultatif si tu affectes un slot précis) */
+    public function availabilitySlot(): BelongsTo
+    {
+        return $this->belongsTo(AvailabilitySlot::class, 'availability_slot_id');
+    }
+
+    /* =========================
+     |          SCOPES
+     ========================= */
+
     public function scopeStatus($query, $status)
     {
         return $query->where('status', $status);
@@ -107,6 +126,17 @@ class Booking extends Model
     public function scopeForProvider($query, $providerId)
     {
         return $query->where('provider_id', $providerId);
+    }
+
+    public function scopeForSlot($query, $slotId)
+    {
+        return $query->where('availability_slot_id', (int) $slotId);
+    }
+
+    /** Réservations issues d’un meeting donné */
+    public function scopeForMeeting($query, $meetingId)
+    {
+        return $query->where('meeting_id', (int) $meetingId);
     }
 
     public function scopeUpcoming($query)
@@ -125,7 +155,10 @@ class Booking extends Model
             ->orderByDesc('end_at');
     }
 
-    /* Events */
+    /* =========================
+     |          EVENTS
+     ========================= */
+
     protected static function booted(): void
     {
         // Avant création : calculs de base (hors commission)
@@ -171,12 +204,22 @@ class Booking extends Model
             if (empty($model->payment_status)) {
                 $model->payment_status = self::PAYMENT_UNPAID;
             }
+
+            // (Optionnel) Si on veut copier automatiquement des horaires depuis le meeting:
+            // - Laisse ce bloc commenté si tu préfères gérer ça au service.
+            // if ($model->meeting_id && !$model->start_at) {
+            //     $meeting = Meeting::with('selectedSlot')->find($model->meeting_id);
+            //     if ($meeting && $meeting->selectedSlot) {
+            //         $model->start_at = $meeting->selectedSlot->start_at;
+            //         $model->end_at   = $meeting->selectedSlot->end_at;
+            //     }
+            // }
         });
 
         // Après création : créer la commission associée (snapshot depuis l’abonnement du provider)
         static::created(function (self $booking) {
             // Récupère l’abonnement courant/actif du provider (si dispo)
-            $provider = $booking->provider()->first();
+            $provider     = $booking->provider()->first();
             $subscription = $provider ? $provider->subscriptionOrActive() : null;
 
             // Détermine la règle (par défaut: percent 0)
@@ -201,7 +244,10 @@ class Booking extends Model
         });
     }
 
-    /* Helpers */
+    /* =========================
+     |          HELPERS
+     ========================= */
+
     public function isCancelable(): bool
     {
         return in_array($this->status, [self::STATUS_PENDING, self::STATUS_CONFIRMED], true)
@@ -249,23 +295,12 @@ class Booking extends Model
     {
         return sprintf('%s • %s → %s', $this->code, (string)$this->start_at, (string)$this->end_at);
     }
+
     /**
      * Avis associé à cette réservation (s'il existe).
      */
     public function review(): HasOne
     {
         return $this->hasOne(Review::class, 'booking_id');
-    }
-
-    /** Créneau réservé (facultatif si tu affectes un slot précis) */
-    public function availabilitySlot(): BelongsTo
-    {
-        return $this->belongsTo(AvailabilitySlot::class, 'availability_slot_id');
-    }
-
-    /** Scope : réservations associées à un slot donné */
-    public function scopeForSlot($q, $slotId)
-    {
-        return $q->where('availability_slot_id', (int) $slotId);
     }
 }

@@ -4,11 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\ServiceOffering;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Carbon\Carbon;
 use Illuminate\Support\Str;
 use OpenApi\Annotations as OA;
 
@@ -16,7 +14,7 @@ class BookingController extends Controller
 {
     public function __construct()
     {
-        // Protège la création/modif/suppression, laisse index/show publics si tu veux
+        // Protège création/modif/suppression ; index/show publics
         $this->middleware('auth:api')->except(['index', 'show']);
     }
 
@@ -39,87 +37,39 @@ class BookingController extends Controller
      *   @OA\Parameter(name="sort", in="query", description="created_at|start_at|end_at|total_amount|status|payment_status|code", @OA\Schema(type="string")),
      *   @OA\Parameter(name="dir", in="query", description="asc|desc", @OA\Schema(type="string", enum={"asc","desc"})),
      *   @OA\Parameter(name="per_page", in="query", @OA\Schema(type="integer", minimum=1, maximum=100)),
-     *   @OA\Response(
-     *     response=200,
-     *     description="OK",
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="success", type="boolean", example=true),
-     *       @OA\Property(property="message", type="string", example="OK"),
-     *       @OA\Property(
-     *         property="data",
-     *         type="object",
-     *         @OA\Property(property="current_page", type="integer", example=1),
-     *         @OA\Property(property="per_page", type="integer", example=15),
-     *         @OA\Property(property="total", type="integer", example=120),
-     *         @OA\Property(property="last_page", type="integer", example=8),
-     *         @OA\Property(
-     *           property="data",
-     *           type="array",
-     *           @OA\Items(type="object",
-     *             example={
-     *               "id":101,"code":"BK-ABC123","status":"pending","payment_status":"unpaid",
-     *               "total_amount":45000,"currency":"XAF","start_at":"2025-08-20 09:00:00"
-     *             }
-     *           )
-     *         )
-     *       )
-     *     )
-     *   )
+     *   @OA\Response(response=200, description="OK")
      * )
      */
     public function index(Request $req)
     {
-        $q = Booking::query()
-            ->with([
-                'client:id,first_name,last_name,email',
-                'provider:id,first_name,last_name,company_name',
-                'serviceOffering:id,title,price_amount,price_unit,currency,provider_id',
-            ]);
+        $q = Booking::query()->with([
+            'client:id,first_name,last_name,email',
+            'provider:id,first_name,last_name,company_name',
+            'serviceOffering:id,title,price_amount,price_unit,currency,provider_id',
+            // ⬇️ AJOUT
+            'meeting:id,provider_id,client_id,status,selected_slot_id,created_at',
+            'meeting.selectedSlot:id,meeting_id,start_at,end_at',
+        ]);
 
-        // Filtres
-        $q->when($req->filled('status'),
-            fn($w) => $w->where('status', (string)$req->input('status'))
-        );
+        $q->when($req->filled('status'), fn($w) => $w->where('status', (string)$req->input('status')));
+        $q->when($req->filled('payment_status'), fn($w) => $w->where('payment_status', (string)$req->input('payment_status')));
+        $q->when($req->filled('client_id'), fn($w) => $w->where('client_id', (int)$req->input('client_id')));
+        $q->when($req->filled('provider_id'), fn($w) => $w->where('provider_id', (int)$req->input('provider_id')));
+        $q->when($req->filled('service_offering_id'), fn($w) => $w->where('service_offering_id', (int)$req->input('service_offering_id')));
 
-        $q->when($req->filled('payment_status'),
-            fn($w) => $w->where('payment_status', (string)$req->input('payment_status'))
-        );
-
-        $q->when($req->filled('client_id'),
-            fn($w) => $w->where('client_id', (int)$req->input('client_id'))
-        );
-
-        $q->when($req->filled('provider_id'),
-            fn($w) => $w->where('provider_id', (int)$req->input('provider_id'))
-        );
-
-        $q->when($req->filled('service_offering_id'),
-            fn($w) => $w->where('service_offering_id', (int)$req->input('service_offering_id'))
-        );
-
-        // Intervalle de dates (sur start_at)
         $from = $req->date('from');
         $to   = $req->date('to');
-        if ($from && $to) {
-            $q->whereBetween('start_at', [$from, $to]);
-        } elseif ($from) {
-            $q->where('start_at', '>=', $from);
-        } elseif ($to) {
-            $q->where('start_at', '<=', $to);
-        }
+        if ($from && $to)        $q->whereBetween('start_at', [$from, $to]);
+        elseif ($from)           $q->where('start_at', '>=', $from);
+        elseif ($to)             $q->where('start_at', '<=', $to);
 
-        // Recherche simple (code + address + city)
         if ($req->filled('q')) {
             $term = trim((string)$req->input('q'));
-            $q->where(function ($w) use ($term) {
-                $w->where('code', 'like', "%{$term}%")
-                    ->orWhere('city', 'like', "%{$term}%")
-                    ->orWhere('address', 'like', "%{$term}%");
-            });
+            $q->where(fn($w) => $w->where('code', 'like', "%{$term}%")
+                ->orWhere('city', 'like', "%{$term}%")
+                ->orWhere('address', 'like', "%{$term}%"));
         }
 
-        // Plage de montant
         if ($req->filled('amount_min') && is_numeric($req->input('amount_min'))) {
             $q->where('total_amount', '>=', (float)$req->input('amount_min'));
         }
@@ -127,18 +77,14 @@ class BookingController extends Controller
             $q->where('total_amount', '<=', (float)$req->input('amount_max'));
         }
 
-        // Tri
         $sort = (string) $req->input('sort', 'created_at');
         $dir  = strtolower((string) $req->input('dir', 'desc')) === 'asc' ? 'asc' : 'desc';
         $allowedSorts = ['created_at','start_at','end_at','total_amount','status','payment_status','code'];
         if (!in_array($sort, $allowedSorts, true)) $sort = 'created_at';
         $q->orderBy($sort, $dir);
 
-        // Pagination
         $perPage = max(1, min((int)$req->input('per_page', 15), 100));
-        $data = $q->paginate($perPage);
-
-        return response()->success($data);
+        return response()->success($q->paginate($perPage));
     }
 
     /**
@@ -147,18 +93,7 @@ class BookingController extends Controller
      *   tags={"Bookings"},
      *   summary="Détail d'une réservation",
      *   @OA\Parameter(name="booking", in="path", required=true, @OA\Schema(type="integer")),
-     *   @OA\Response(
-     *     response=200,
-     *     description="OK",
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="success", type="boolean", example=true),
-     *       @OA\Property(property="message", type="string", example="OK"),
-     *       @OA\Property(property="data", type="object",
-     *         example={"id":101,"code":"BK-ABC123","status":"confirmed","payment_status":"paid"}
-     *       )
-     *     )
-     *   ),
+     *   @OA\Response(response=200, description="OK"),
      *   @OA\Response(response=404, description="Not Found")
      * )
      */
@@ -168,6 +103,9 @@ class BookingController extends Controller
             'client:id,first_name,last_name,email,phone',
             'provider:id,first_name,last_name,company_name,phone',
             'serviceOffering:id,title,price_amount,price_unit,currency,provider_id',
+            // ⬇️ AJOUT
+            'meeting:id,provider_id,client_id,status,selected_slot_id,created_at',
+            'meeting.selectedSlot:id,meeting_id,start_at,end_at',
         ]);
 
         return response()->success($booking);
@@ -179,37 +117,8 @@ class BookingController extends Controller
      *   tags={"Bookings"},
      *   summary="Créer une réservation",
      *   security={{"bearerAuth":{}}},
-     *   @OA\RequestBody(
-     *     required=true,
-     *     @OA\JsonContent(
-     *       type="object",
-     *       required={"service_offering_id","client_id","quantity","unit_price"},
-     *       @OA\Property(property="service_offering_id", type="integer", example=10),
-     *       @OA\Property(property="client_id", type="integer", example=25),
-     *       @OA\Property(property="provider_id", type="integer", nullable=true, example=5),
-     *       @OA\Property(property="quantity", type="number", format="float", example=2),
-     *       @OA\Property(property="unit_price", type="number", format="float", example=15000),
-     *       @OA\Property(property="tax_rate", type="number", format="float", example=19.25),
-     *       @OA\Property(property="discount_amount", type="number", format="float", example=0),
-     *       @OA\Property(property="currency", type="string", example="XAF"),
-     *       @OA\Property(property="start_at", type="string", format="date-time", example="2025-08-20 09:00:00"),
-     *       @OA\Property(property="end_at", type="string", format="date-time", example="2025-08-20 10:00:00"),
-     *       @OA\Property(property="city", type="string", example="Douala"),
-     *       @OA\Property(property="address", type="string", example="Bonapriso, Rue X")
-     *     )
-     *   ),
-     *   @OA\Response(
-     *     response=201,
-     *     description="Créé",
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="success", type="boolean", example=true),
-     *       @OA\Property(property="message", type="string", example="Réservation créée"),
-     *       @OA\Property(property="data", type="object",
-     *         example={"id":120,"code":"BK-7UQZ9K","status":"pending","payment_status":"unpaid"}
-     *       )
-     *     )
-     *   ),
+     *   @OA\RequestBody(required=true),
+     *   @OA\Response(response=201, description="Créé"),
      *   @OA\Response(response=401, description="Unauthenticated"),
      *   @OA\Response(response=422, description="Validation error")
      * )
@@ -218,19 +127,18 @@ class BookingController extends Controller
     {
         $validated = $this->validatePayload($req);
 
-        // Si code non fourni, générer un code unique
+        // Générer un code s’il est absent
         $validated['code'] = $validated['code'] ?? $this->generateCode();
 
-        // Sécurité : recalculer les montants côté serveur
+        // Recalcul des montants côté serveur
         $this->computeTotals($validated);
 
-        // Cohérence: provider = provider du service si non fourni
+        // Provider par défaut = provider de l’offre
         if (empty($validated['provider_id'])) {
             $service = ServiceOffering::findOrFail($validated['service_offering_id']);
             $validated['provider_id'] = $service->provider_id;
         }
 
-        // Statut initial par défaut
         $validated['status'] = $validated['status'] ?? 'pending';
         $validated['payment_status'] = $validated['payment_status'] ?? 'unpaid';
         $validated['currency'] = $validated['currency'] ?? 'XAF';
@@ -247,8 +155,11 @@ class BookingController extends Controller
      *   summary="Mettre à jour une réservation",
      *   security={{"bearerAuth":{}}},
      *   @OA\Parameter(name="booking", in="path", required=true, @OA\Schema(type="integer")),
-     *   @OA\RequestBody(required=true, @OA\JsonContent(type="object")),
-     *   @OA\Response(response=200, description="OK")
+     *   @OA\RequestBody(required=true),
+     *   @OA\Response(response=200, description="OK"),
+     *   @OA\Response(response=401, description="Unauthenticated"),
+     *   @OA\Response(response=404, description="Not Found"),
+     *   @OA\Response(response=422, description="Validation error")
      * )
      * @OA\Put(
      *   path="/api/bookings/{booking}",
@@ -256,8 +167,11 @@ class BookingController extends Controller
      *   summary="Mettre à jour une réservation (PUT)",
      *   security={{"bearerAuth":{}}},
      *   @OA\Parameter(name="booking", in="path", required=true, @OA\Schema(type="integer")),
-     *   @OA\RequestBody(required=true, @OA\JsonContent(type="object")),
-     *   @OA\Response(response=200, description="OK")
+     *   @OA\RequestBody(required=true),
+     *   @OA\Response(response=200, description="OK"),
+     *   @OA\Response(response=401, description="Unauthenticated"),
+     *   @OA\Response(response=404, description="Not Found"),
+     *   @OA\Response(response=422, description="Validation error")
      * )
      */
     public function update(Request $req, Booking $booking)
@@ -269,10 +183,9 @@ class BookingController extends Controller
         if (count(array_intersect(array_keys($validated), $fieldsAffectTotals)) > 0) {
             $payload = array_merge($booking->toArray(), $validated);
             $this->computeTotals($payload);
-            $validated['subtotal']        = $payload['subtotal'];
-            $validated['tax_amount']      = $payload['tax_amount'];
-            $validated['total_amount']    = $payload['total_amount'];
-            $validated['total_price']     = $payload['total_price'];
+            $validated['subtotal']     = $payload['subtotal'];
+            $validated['tax_amount']   = $payload['tax_amount'];
+            $validated['total_amount'] = $payload['total_amount'];
         }
 
         DB::transaction(fn() => $booking->update($validated));
@@ -310,12 +223,10 @@ class BookingController extends Controller
      */
     public function confirm(Booking $booking)
     {
-        if (!in_array($booking->status, ['pending','in_progress'], true)) {
-            $booking->status = 'confirmed';
-            $booking->save();
-            return response()->success($booking, 'Réservation confirmée');
+        if ($booking->status !== Booking::STATUS_PENDING) {
+            return response()->success($booking, 'Déjà confirmée ou statut non éligible');
         }
-        $booking->update(['status' => 'confirmed']);
+        $booking->update(['status' => Booking::STATUS_CONFIRMED]);
         return response()->success($booking, 'Réservation confirmée');
     }
 
@@ -331,7 +242,10 @@ class BookingController extends Controller
      */
     public function start(Booking $booking)
     {
-        $booking->update(['status' => 'in_progress']);
+        if (in_array($booking->status, [Booking::STATUS_CANCELLED, Booking::STATUS_COMPLETED], true)) {
+            return response()->success($booking, 'Statut non éligible au démarrage');
+        }
+        $booking->update(['status' => Booking::STATUS_IN_PROGRESS]);
         return response()->success($booking, 'Prestation démarrée');
     }
 
@@ -347,7 +261,7 @@ class BookingController extends Controller
      */
     public function complete(Booking $booking)
     {
-        $booking->update(['status' => 'completed']);
+        $booking->update(['status' => Booking::STATUS_COMPLETED]);
         return response()->success($booking, 'Prestation terminée');
     }
 
@@ -358,20 +272,20 @@ class BookingController extends Controller
      *   summary="Annuler une réservation",
      *   security={{"bearerAuth":{}}},
      *   @OA\Parameter(name="booking", in="path", required=true, @OA\Schema(type="integer")),
-     *   @OA\RequestBody(@OA\JsonContent(type="object", @OA\Property(property="reason", type="string", nullable=true))),
+     *   @OA\RequestBody(@OA\JsonContent(type="object", @OA\Property(property="cancelled_reason", type="string", nullable=true))),
      *   @OA\Response(response=200, description="Annulée")
      * )
      */
     public function cancel(Booking $booking, Request $req)
     {
         $data = $req->validate([
-            'reason' => ['nullable','string','max:255'],
+            'cancelled_reason' => ['nullable','string','max:255'],
         ]);
 
         $booking->update([
-            'status'              => 'cancelled',
-            'cancellation_reason' => $data['reason'] ?? null,
-            'cancelled_at'        => now(),
+            'status'           => Booking::STATUS_CANCELLED,
+            'cancelled_reason' => $data['cancelled_reason'] ?? null,
+            'cancelled_at'     => now(),
         ]);
 
         return response()->success($booking, 'Réservation annulée');
@@ -423,7 +337,6 @@ class BookingController extends Controller
             'subtotal'     => $payload['subtotal'],
             'tax_amount'   => $payload['tax_amount'],
             'total_amount' => $payload['total_amount'],
-            'total_price'  => $payload['total_price'],
         ]);
 
         return response()->success($booking->fresh(), 'Montants recalculés');
@@ -441,7 +354,6 @@ class BookingController extends Controller
 
             'quantity'            => [$updating ? 'sometimes' : 'required','numeric','min:1'],
             'unit_price'          => [$updating ? 'sometimes' : 'required','numeric','min:0'],
-            'total_price'         => [$updating ? 'sometimes' : 'nullable','numeric','min:0'], // sera recalculé
             'currency'            => [$updating ? 'sometimes' : 'nullable','string','max:10'],
 
             'subtotal'            => [$updating ? 'sometimes' : 'nullable','numeric','min:0'],
@@ -455,7 +367,7 @@ class BookingController extends Controller
 
             'notes_client'        => [$updating ? 'sometimes' : 'nullable','string'],
             'notes_provider'      => [$updating ? 'sometimes' : 'nullable','string'],
-            'cancellation_reason' => [$updating ? 'sometimes' : 'nullable','string','max:255'],
+            'cancelled_reason'    => [$updating ? 'sometimes' : 'nullable','string','max:255'],
 
             'code'                => [$updating ? 'sometimes' : 'nullable','string','max:255','unique:bookings,code'],
             'start_at'            => [$updating ? 'sometimes' : 'nullable','date'],
@@ -473,7 +385,7 @@ class BookingController extends Controller
     }
 
     /**
-     * Recalcule subtotal, tax_amount, total_amount, total_price
+     * Recalcule subtotal, tax_amount, total_amount
      */
     private function computeTotals(array &$payload): void
     {
@@ -489,12 +401,10 @@ class BookingController extends Controller
         $payload['subtotal']     = round($subtotal, 2);
         $payload['tax_amount']   = $tax;
         $payload['total_amount'] = round($total, 2);
-        // total_price => historisation prix (si tu la gardes distincte)
-        $payload['total_price']  = $payload['total_amount'];
     }
 
     /**
-     * Génération d’un code unique lisible
+     * Génère un code unique lisible
      */
     private function generateCode(): string
     {

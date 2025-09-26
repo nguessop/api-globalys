@@ -19,7 +19,7 @@ class CreateBookingsTable extends Migration
             $t->foreignId('client_id')->constrained('users')->onDelete('cascade');
             $t->unsignedInteger('quantity')->default(1);
             $t->decimal('unit_price', 12, 2);
-            $t->decimal('total_price', 12, 2);
+            $t->decimal('total_price', 12, 2)->default(0.00);
             $t->enum('status',['pending','confirmed','in_progress','completed','cancelled'])->default('pending');
             $t->text('notes_client')->nullable();
             $t->text('notes_provider')->nullable();
@@ -46,6 +46,14 @@ class CreateBookingsTable extends Migration
             $t->enum('payment_status', ['unpaid','paid','refunded','partial'])->default('unpaid');
 
             $t->timestamps();
+
+            // Lien optionnel vers le meeting d'origine
+            $t->foreignId('meeting_id')
+                ->nullable()
+                ->constrained('meetings')
+                ->nullOnDelete();
+
+            $t->index(['meeting_id']);
 
             $t->index(['client_id','provider_id','status']);
             $t->index(['service_offering_id','start_at']);

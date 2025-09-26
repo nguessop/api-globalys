@@ -79,14 +79,27 @@ class AuthController extends Controller
         }
 
         /** @var \App\Models\User $user */
-        $user = auth()->user();
+        $user = auth()->user()->load('role');
+
+        // Charger seulement les champs essentiels des services
+        $services = $user->serviceOfferings()
+            ->select('id', 'title', 'price_amount', 'currency', 'status')
+            ->active()
+            ->get();
+
+        // Intégrer directement dans la réponse user
+        $user->setRelation('services', collect([
+            'count' => $services->count(),
+            'list'  => $services,
+        ]));
 
         return response()->success([
             'token'      => $token,
-            'user'       => $user->load('role'), // relation "role" (singulier) cohérente avec ton modèle
+            'user'       => $user,
             'expires_in' => auth('api')->factory()->getTTL() * 60, // en secondes
         ], 'Connexion réussie');
     }
+
 
     /**
      * @OA\Post(
