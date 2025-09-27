@@ -153,8 +153,9 @@ class ServiceOfferingController extends Controller
     public function show(ServiceOffering $serviceOffering)
     {
         $serviceOffering->load([
-            'provider:id,first_name,last_name,company_name,user_type,account_type',
-            'subCategory:id,name,category_id',
+            'provider',
+            'subCategory',
+            'bookings'
         ]);
 
         return response()->success($serviceOffering);
