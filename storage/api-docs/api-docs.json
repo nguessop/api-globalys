@@ -3411,17 +3411,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ThreadListResponse"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
+                        "description": "OK"
                     }
                 },
                 "security": [
@@ -3437,7 +3427,7 @@
                     "Messaging"
                 ],
                 "summary": "Créer ou récupérer un thread pour un service",
-                "description": "Créer ou récupérer un thread pour un service.",
+                "description": "Créer / récupérer un thread pour un service.",
                 "operationId": "3ec7e0065e51bac09adadd725401d637",
                 "requestBody": {
                     "required": true,
@@ -3460,20 +3450,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ThreadResponse"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
-                    },
-                    "422": {
-                        "description": "Validation error"
+                        "description": "OK"
                     }
                 },
                 "security": [
@@ -3489,7 +3466,7 @@
                     "Messaging"
                 ],
                 "summary": "Lister les messages d’un thread",
-                "description": "Lister les messages d’un thread.",
+                "description": "Lister les messages d’un thread (avec pièces jointes & réactions).",
                 "operationId": "c5fa9fed2f67e86535bcf1ffaffacb39",
                 "parameters": [
                     {
@@ -3529,20 +3506,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/MessageListResponse"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
-                    },
-                    "403": {
-                        "description": "Forbidden"
+                        "description": "OK"
                     }
                 },
                 "security": [
@@ -3556,7 +3520,7 @@
                     "Messaging"
                 ],
                 "summary": "Envoyer un message dans un thread",
-                "description": "Envoyer un message.",
+                "description": "Envoyer un message (avec pièces jointes optionnelles).",
                 "operationId": "7810f9a86cc4b24097e61f1342f7a8bf",
                 "parameters": [
                     {
@@ -3580,6 +3544,12 @@
                                     "body": {
                                         "type": "string",
                                         "example": "Bonjour, j’ai une question…"
+                                    },
+                                    "attachment_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
                                     }
                                 },
                                 "type": "object"
@@ -3589,23 +3559,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Créé",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/MessageResponse"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
-                    },
-                    "403": {
-                        "description": "Forbidden"
-                    },
-                    "422": {
-                        "description": "Validation error"
+                        "description": "Créé"
                     }
                 },
                 "security": [
@@ -3635,26 +3589,287 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "ok"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/messages/threads/{thread}/attachments": {
+            "post": {
+                "tags": [
+                    "Messaging"
+                ],
+                "summary": "Uploader une pièce jointe",
+                "description": "Uploader une pièce jointe (multipart/form-data: file).",
+                "operationId": "7e03101a9179b3981276c46dbac38f96",
+                "parameters": [
+                    {
+                        "name": "thread",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
                             }
                         }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/messages/threads/{thread}/messages/{message}/reactions": {
+            "post": {
+                "tags": [
+                    "Messaging"
+                ],
+                "summary": "Ajouter / remplacer la réaction (WhatsApp-like)",
+                "description": "Réagir à un message (remplace la réaction existante de l'utilisateur si différente).",
+                "operationId": "5ce785e059c93746f1e9cb45eeb67eb8",
+                "parameters": [
+                    {
+                        "name": "thread",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
                     },
-                    "401": {
-                        "description": "Unauthenticated"
+                    {
+                        "name": "message",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "emoji"
+                                ],
+                                "properties": {
+                                    "emoji": {
+                                        "type": "string",
+                                        "example": "❤️"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Messaging"
+                ],
+                "summary": "Retirer ma réaction",
+                "description": "Retirer sa réaction (DELETE avec body { emoji } via axios).",
+                "operationId": "1f4f431de7e3bc71b390697320f5cb34",
+                "parameters": [
+                    {
+                        "name": "thread",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
                     },
-                    "403": {
-                        "description": "Forbidden"
+                    {
+                        "name": "message",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "emoji": {
+                                        "type": "string",
+                                        "example": "❤️"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/messages/threads/{thread}/messages/schedule": {
+            "get": {
+                "tags": [
+                    "Messaging"
+                ],
+                "summary": "Lister les messages programmés",
+                "description": "Lister mes messages programmés sur un thread.",
+                "operationId": "55528fe8b60a648420e3cecc4062123f",
+                "parameters": [
+                    {
+                        "name": "thread",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Messaging"
+                ],
+                "summary": "Programmer l’envoi d’un message",
+                "description": "Programmer un message.",
+                "operationId": "800f6de618a8a4e3a3a18e6a4dcd5ae5",
+                "parameters": [
+                    {
+                        "name": "thread",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "body",
+                                    "scheduled_at"
+                                ],
+                                "properties": {
+                                    "body": {
+                                        "type": "string",
+                                        "example": "Rappel pour demain"
+                                    },
+                                    "scheduled_at": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
+                                    "attachment_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/messages/threads/{thread}/messages/schedule/{scheduled}": {
+            "delete": {
+                "tags": [
+                    "Messaging"
+                ],
+                "summary": "Annuler un message programmé",
+                "description": "Annuler un message programmé.",
+                "operationId": "4ebc3a736c0c20951467f96df70ccff6",
+                "parameters": [
+                    {
+                        "name": "thread",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "scheduled",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
                     }
                 },
                 "security": [
@@ -8203,6 +8418,72 @@
                 },
                 "type": "object"
             },
+            "Attachment": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "example": "att_123"
+                    },
+                    "url": {
+                        "type": "string",
+                        "example": "https://cdn.../file.jpg"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "image.jpg"
+                    },
+                    "mime_type": {
+                        "type": "string",
+                        "example": "image/jpeg"
+                    },
+                    "size": {
+                        "type": "integer",
+                        "example": 245678
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "image",
+                            "file",
+                            "video",
+                            "audio"
+                        ]
+                    },
+                    "width": {
+                        "type": "integer",
+                        "example": 1024,
+                        "nullable": true
+                    },
+                    "height": {
+                        "type": "integer",
+                        "example": 768,
+                        "nullable": true
+                    },
+                    "thumbnail_url": {
+                        "type": "string",
+                        "example": "https://cdn.../thumb.jpg",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Reaction": {
+                "properties": {
+                    "emoji": {
+                        "type": "string",
+                        "example": "👍"
+                    },
+                    "count": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "mine": {
+                        "type": "boolean",
+                        "example": true
+                    }
+                },
+                "type": "object"
+            },
             "Thread": {
                 "required": [
                     "id",
@@ -8268,6 +8549,18 @@
                     "sender_id": {
                         "type": "integer",
                         "example": 15
+                    },
+                    "attachments": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Attachment"
+                        }
+                    },
+                    "reactions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Reaction"
+                        }
                     }
                 },
                 "type": "object"

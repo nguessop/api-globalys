@@ -10,12 +10,35 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 /**
  * @OA\Tag(
  *   name="Messaging",
  *   description="Messagerie (threads & messages) protégée par JWT"
+ * )
+ *
+ * @OA\Schema(
+ *   schema="Attachment",
+ *   type="object",
+ *   @OA\Property(property="id", type="string", example="att_123"),
+ *   @OA\Property(property="url", type="string", example="https://cdn.../file.jpg"),
+ *   @OA\Property(property="name", type="string", example="image.jpg"),
+ *   @OA\Property(property="mime_type", type="string", example="image/jpeg"),
+ *   @OA\Property(property="size", type="integer", example=245678),
+ *   @OA\Property(property="kind", type="string", enum={"image","file","video","audio"}),
+ *   @OA\Property(property="width", type="integer", nullable=true, example=1024),
+ *   @OA\Property(property="height", type="integer", nullable=true, example=768),
+ *   @OA\Property(property="thumbnail_url", type="string", nullable=true, example="https://cdn.../thumb.jpg")
+ * )
+ *
+ * @OA\Schema(
+ *   schema="Reaction",
+ *   type="object",
+ *   @OA\Property(property="emoji", type="string", example="👍"),
+ *   @OA\Property(property="count", type="integer", example=3),
+ *   @OA\Property(property="mine", type="boolean", example=true)
  * )
  *
  * @OA\Schema(
@@ -42,7 +65,9 @@ use Tymon\JWTAuth\Facades\JWTAuth;
  *   @OA\Property(property="id", type="string", example="10"),
  *   @OA\Property(property="body", type="string", example="Bonjour 👋"),
  *   @OA\Property(property="created_at", type="string", format="date-time", example="2025-01-01T12:34:56Z"),
- *   @OA\Property(property="sender_id", type="integer", example=15)
+ *   @OA\Property(property="sender_id", type="integer", example=15),
+ *   @OA\Property(property="attachments", type="array", @OA\Items(ref="#/components/schemas/Attachment")),
+ *   @OA\Property(property="reactions", type="array", @OA\Items(ref="#/components/schemas/Reaction"))
  * )
  *
  * @OA\Schema(
@@ -88,6 +113,10 @@ class MessageThreadController extends Controller
         $this->middleware('auth:api');
     }
 
+    /* =======================================================================
+     * Threads
+     * ======================================================================= */
+
     /**
      * Lister les threads de l'utilisateur courant (participant).
      *
@@ -99,12 +128,7 @@ class MessageThreadController extends Controller
      *   @OA\Parameter(name="service_id", in="query", description="Filtrer par service", @OA\Schema(type="integer")),
      *   @OA\Parameter(name="page", in="query", @OA\Schema(type="integer", minimum=1), example=1),
      *   @OA\Parameter(name="limit", in="query", @OA\Schema(type="integer", minimum=1, maximum=100), example=20),
-     *   @OA\Response(
-     *     response=200,
-     *     description="OK",
-     *     @OA\JsonContent(ref="#/components/schemas/ThreadListResponse")
-     *   ),
-     *   @OA\Response(response=401, description="Unauthenticated")
+     *   @OA\Response(response=200, description="OK")
      * )
      */
     public function index(Request $request)
@@ -128,7 +152,7 @@ class MessageThreadController extends Controller
         $total   = (clone $q)->count();
         $threads = $q->limit($limit)->offset(($page - 1) * $limit)->get();
 
-        // Récupérer le last_read_at du user pour chaque thread
+        // last_read_at par thread pour ce user
         $reads = MessageThreadParticipant::query()
             ->whereIn('thread_id', $threads->pluck('id'))
             ->where('user_id', $uid)
@@ -136,12 +160,9 @@ class MessageThreadController extends Controller
             ->keyBy('thread_id');
 
         $data = $threads->map(function (MessageThread $t) use ($uid, $reads) {
-            // Dernier message (simple et fiable)
-            $last = $t->messages()
-                ->orderByDesc('created_at')
-                ->first(['id', 'body', 'created_at', 'sender_id']);
+            $last = $t->messages()->orderByDesc('created_at')
+                ->first(['id','body','created_at','sender_id']);
 
-            // Unread count pour le user courant (messages non envoyés par lui, après last_read_at)
             $lastReadAt = optional($reads->get($t->id))->last_read_at;
             $unread = Message::query()
                 ->where('thread_id', $t->id)
@@ -167,16 +188,12 @@ class MessageThreadController extends Controller
 
         return response()->json([
             'data' => $data,
-            'meta' => [
-                'page'  => $page,
-                'limit' => $limit,
-                'total' => $total,
-            ],
+            'meta' => ['page'=>$page,'limit'=>$limit,'total'=>$total],
         ]);
     }
 
     /**
-     * Créer ou récupérer un thread pour un service.
+     * Créer / récupérer un thread pour un service.
      * @OA\Post(
      *   path="/api/messages/threads/ensure",
      *   summary="Créer ou récupérer un thread pour un service",
@@ -187,9 +204,7 @@ class MessageThreadController extends Controller
      *       @OA\Property(property="service_id", type="integer", example=42)
      *     )
      *   ),
-     *   @OA\Response(response=200, description="OK", @OA\JsonContent(ref="#/components/schemas/ThreadResponse")),
-     *   @OA\Response(response=401, description="Unauthenticated"),
-     *   @OA\Response(response=422, description="Validation error")
+     *   @OA\Response(response=200, description="OK")
      * )
      */
     public function ensure(Request $request)
@@ -244,9 +259,12 @@ class MessageThreadController extends Controller
         ]);
     }
 
+    /* =======================================================================
+     * Messages (liste / envoi)
+     * ======================================================================= */
+
     /**
-     * Lister les messages d’un thread.
-     *
+     * Lister les messages d’un thread (avec pièces jointes & réactions).
      * @OA\Get(
      *   path="/api/messages/threads/{thread}/messages",
      *   summary="Lister les messages d’un thread",
@@ -256,20 +274,13 @@ class MessageThreadController extends Controller
      *   @OA\Parameter(name="limit", in="query", @OA\Schema(type="integer", minimum=1, maximum=100), example=30),
      *   @OA\Parameter(name="after", in="query", @OA\Schema(type="string", format="date-time")),
      *   @OA\Parameter(name="before", in="query", @OA\Schema(type="string", format="date-time")),
-     *   @OA\Response(
-     *     response=200,
-     *     description="OK",
-     *     @OA\JsonContent(ref="#/components/schemas/MessageListResponse")
-     *   ),
-     *   @OA\Response(response=401, description="Unauthenticated"),
-     *   @OA\Response(response=403, description="Forbidden")
+     *   @OA\Response(response=200, description="OK")
      * )
      */
     public function listMessages(Request $request, MessageThread $thread)
     {
         $uid = $this->userId();
         if (!$uid) return response()->json(['message' => 'Unauthenticated'], 401);
-
         $this->assertParticipant($uid, $thread);
 
         $limit  = (int) max(1, min(100, (int) $request->query('limit', 30)));
@@ -281,20 +292,64 @@ class MessageThreadController extends Controller
         if ($after)  { try { $q->where('created_at', '>', Carbon::parse($after));   } catch (\Throwable $e) {} }
         if ($before) { try { $q->where('created_at', '<', Carbon::parse($before)); } catch (\Throwable $e) {} }
 
-        $items = $q->limit($limit)->get(['id', 'body', 'created_at', 'sender_id']);
+        $items = $q->limit($limit)->get(['id', 'body', 'created_at', 'sender_id', 'thread_id']);
+        $ids   = $items->pluck('id')->all();
+
+        // Attachments
+        $attByMsg = collect();
+        if (!empty($ids)) {
+            $atts = DB::table('message_attachments')
+                ->whereIn('message_id', $ids)
+                ->get();
+            $attByMsg = $atts->groupBy('message_id')->map(function ($grp) {
+                return $grp->map(function ($a) {
+                    return [
+                        'id'            => (string) $a->id,
+                        'url'           => $a->url ?? ($a->path ? Storage::url($a->path) : null),
+                        'name'          => $a->name,
+                        'mime_type'     => $a->mime_type,
+                        'size'          => (int) ($a->size ?? 0),
+                        'kind'          => $a->kind,
+                        'width'         => $a->width ? (int) $a->width : null,
+                        'height'        => $a->height ? (int) $a->height : null,
+                        'thumbnail_url' => $a->thumbnail_url,
+                    ];
+                })->values();
+            });
+        }
+
+        // Reactions (agrégées + mine)
+        $reactByMsg = collect();
+        if (!empty($ids)) {
+            $recs = DB::table('message_reactions')->whereIn('message_id', $ids)->get();
+            $reactByMsg = $recs->groupBy('message_id')->map(function ($grp) use ($uid) {
+                $byEmoji = [];
+                foreach ($grp as $r) {
+                    $emoji = $r->emoji;
+                    if (!isset($byEmoji[$emoji])) $byEmoji[$emoji] = ['emoji'=>$emoji, 'count'=>0, 'mine'=>false];
+                    $byEmoji[$emoji]['count']++;
+                    if ((int)$r->user_id === (int)$uid) $byEmoji[$emoji]['mine'] = true;
+                }
+                return array_values($byEmoji);
+            });
+        }
 
         return response()->json([
-            'data' => $items->map(fn (Message $m) => [
-                'id'         => (string) $m->id,
-                'body'       => $m->body,
-                'created_at' => optional($m->created_at)->toIso8601String(),
-                'sender_id'  => (int) $m->sender_id,
-            ]),
+            'data' => $items->map(function (Message $m) use ($attByMsg, $reactByMsg) {
+                return [
+                    'id'         => (string) $m->id,
+                    'body'       => $m->body,
+                    'created_at' => optional($m->created_at)->toIso8601String(),
+                    'sender_id'  => (int) $m->sender_id,
+                    'attachments'=> $attByMsg->get($m->id, collect())->values(),
+                    'reactions'  => $reactByMsg->get($m->id, []),
+                ];
+            }),
         ]);
     }
 
     /**
-     * Envoyer un message.
+     * Envoyer un message (avec pièces jointes optionnelles).
      * @OA\Post(
      *   path="/api/messages/threads/{thread}/messages",
      *   summary="Envoyer un message dans un thread",
@@ -302,25 +357,25 @@ class MessageThreadController extends Controller
      *   security={{"bearerAuth":{}}},
      *   @OA\Parameter(name="thread", in="path", required=true, @OA\Schema(type="string")),
      *   @OA\RequestBody(required=true,
-     *     @OA\JsonContent(required={"body"},
-     *       @OA\Property(property="body", type="string", example="Bonjour, j’ai une question…")
+     *     @OA\JsonContent(
+     *       required={"body"},
+     *       @OA\Property(property="body", type="string", example="Bonjour, j’ai une question…"),
+     *       @OA\Property(property="attachment_ids", type="array", @OA\Items(type="string"))
      *     )
      *   ),
-     *   @OA\Response(response=201, description="Créé", @OA\JsonContent(ref="#/components/schemas/MessageResponse")),
-     *   @OA\Response(response=401, description="Unauthenticated"),
-     *   @OA\Response(response=403, description="Forbidden"),
-     *   @OA\Response(response=422, description="Validation error")
+     *   @OA\Response(response=201, description="Créé")
      * )
      */
     public function send(Request $request, MessageThread $thread)
     {
         $uid = $this->userId();
         if (!$uid) return response()->json(['message' => 'Unauthenticated'], 401);
-
         $this->assertParticipant($uid, $thread);
 
         $data = $request->validate([
-            'body' => ['required', 'string', 'min:1', 'max:5000'],
+            'body'           => ['required', 'string', 'min:1', 'max:5000'],
+            'attachment_ids' => ['array'],
+            'attachment_ids.*' => ['string'],
         ]);
 
         $message = DB::transaction(function () use ($thread, $uid, $data) {
@@ -329,6 +384,15 @@ class MessageThreadController extends Controller
                 'sender_id' => (int) $uid,
                 'body'      => $data['body'],
             ]);
+
+            // Attacher les fichiers uploadés au message
+            if (!empty($data['attachment_ids'])) {
+                DB::table('message_attachments')
+                    ->whereIn('id', $data['attachment_ids'])
+                    ->whereNull('message_id')
+                    ->where('thread_id', $thread->id)
+                    ->update(['message_id' => $message->id, 'updated_at' => now()]);
+            }
 
             $thread->update(['last_message_at' => now()]);
 
@@ -339,12 +403,29 @@ class MessageThreadController extends Controller
             return $message;
         });
 
+        // Charger les attachments tout juste liés
+        $atts = DB::table('message_attachments')->where('message_id', $message->id)->get()->map(function ($a) {
+            return [
+                'id'            => (string) $a->id,
+                'url'           => $a->url ?? ($a->path ? Storage::url($a->path) : null),
+                'name'          => $a->name,
+                'mime_type'     => $a->mime_type,
+                'size'          => (int) ($a->size ?? 0),
+                'kind'          => $a->kind,
+                'width'         => $a->width ? (int) $a->width : null,
+                'height'        => $a->height ? (int) $a->height : null,
+                'thumbnail_url' => $a->thumbnail_url,
+            ];
+        })->values();
+
         return response()->json([
             'data' => [
-                'id'         => (string) $message->id,
-                'body'       => $message->body,
-                'created_at' => optional($message->created_at)->toIso8601String(),
-                'sender_id'  => (int) $message->sender_id,
+                'id'          => (string) $message->id,
+                'body'        => $message->body,
+                'created_at'  => optional($message->created_at)->toIso8601String(),
+                'sender_id'   => (int) $message->sender_id,
+                'attachments' => $atts,
+                'reactions'   => [],
             ],
         ], 201);
     }
@@ -357,19 +438,13 @@ class MessageThreadController extends Controller
      *   tags={"Messaging"},
      *   security={{"bearerAuth":{}}},
      *   @OA\Parameter(name="thread", in="path", required=true, @OA\Schema(type="string")),
-     *   @OA\Response(response=200, description="OK", @OA\JsonContent(
-     *     type="object",
-     *     @OA\Property(property="status", type="string", example="ok")
-     *   )),
-     *   @OA\Response(response=401, description="Unauthenticated"),
-     *   @OA\Response(response=403, description="Forbidden")
+     *   @OA\Response(response=200, description="OK")
      * )
      */
     public function markRead(Request $request, MessageThread $thread)
     {
         $uid = $this->userId();
         if (!$uid) return response()->json(['message' => 'Unauthenticated'], 401);
-
         $this->assertParticipant($uid, $thread);
 
         MessageThreadParticipant::where('thread_id', $thread->id)
@@ -379,7 +454,358 @@ class MessageThreadController extends Controller
         return response()->json(['status' => 'ok']);
     }
 
-    /* ===================== Helpers ===================== */
+    /* =======================================================================
+     * Pièces jointes
+     * ======================================================================= */
+
+    /**
+     * Uploader une pièce jointe (multipart/form-data: file).
+     * @OA\Post(
+     *   path="/api/messages/threads/{thread}/attachments",
+     *   summary="Uploader une pièce jointe",
+     *   tags={"Messaging"},
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="thread", in="path", required=true, @OA\Schema(type="string")),
+     *   @OA\RequestBody(required=true,
+     *     @OA\MediaType(mediaType="multipart/form-data",
+     *       @OA\Schema(
+     *         @OA\Property(property="file", type="string", format="binary")
+     *       )
+     *     )
+     *   ),
+     *   @OA\Response(response=200, description="OK")
+     * )
+     */
+    public function uploadAttachment(Request $request, MessageThread $thread)
+    {
+        $uid = $this->userId();
+        if (!$uid) return response()->json(['message' => 'Unauthenticated'], 401);
+        $this->assertParticipant($uid, $thread);
+
+        $request->validate([
+            'file' => ['required','file','max:20480'], // 20MB
+        ]);
+
+        $file = $request->file('file');
+        $path = $file->store('message_attachments/'.date('Y/m/d'), 'public');
+        $mime = $file->getMimeType();
+        $size = $file->getSize();
+        $name = $file->getClientOriginalName();
+
+        $kind = 'file';
+        if (str_starts_with($mime, 'image/'))      $kind = 'image';
+        elseif (str_starts_with($mime, 'video/'))  $kind = 'video';
+        elseif (str_starts_with($mime, 'audio/'))  $kind = 'audio';
+
+        $width = null; $height = null;
+        if ($kind === 'image') {
+            try {
+                [$width, $height] = getimagesize($file->getRealPath()) ?: [null, null];
+            } catch (\Throwable $e) {}
+        }
+
+        $id = DB::table('message_attachments')->insertGetId([
+            'thread_id'     => $thread->id,
+            'message_id'    => null,
+            'uploaded_by'   => $uid,
+            'path'          => $path,
+            'url'           => Storage::disk('public')->url($path),
+            'name'          => $name,
+            'mime_type'     => $mime,
+            'size'          => $size,
+            'kind'          => $kind,
+            'width'         => $width,
+            'height'        => $height,
+            'thumbnail_url' => null,
+            'created_at'    => now(),
+            'updated_at'    => now(),
+        ]);
+
+        $row = DB::table('message_attachments')->where('id', $id)->first();
+
+        return response()->json([
+            'data' => [
+                'id'            => (string) $row->id,
+                'url'           => $row->url ?? Storage::disk('public')->url($row->path),
+                'name'          => $row->name,
+                'mime_type'     => $row->mime_type,
+                'size'          => (int) $row->size,
+                'kind'          => $row->kind,
+                'width'         => $row->width ? (int) $row->width : null,
+                'height'        => $row->height ? (int) $row->height : null,
+                'thumbnail_url' => $row->thumbnail_url,
+            ]
+        ]);
+    }
+
+    /* =======================================================================
+     * Réactions (style WhatsApp)
+     * ======================================================================= */
+
+    /**
+     * Réagir à un message (remplace la réaction existante de l'utilisateur si différente).
+     * @OA\Post(
+     *   path="/api/messages/threads/{thread}/messages/{message}/reactions",
+     *   summary="Ajouter / remplacer la réaction (WhatsApp-like)",
+     *   tags={"Messaging"},
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="thread", in="path", required=true, @OA\Schema(type="string")),
+     *   @OA\Parameter(name="message", in="path", required=true, @OA\Schema(type="string")),
+     *   @OA\RequestBody(required=true, @OA\JsonContent(
+     *     required={"emoji"},
+     *     @OA\Property(property="emoji", type="string", example="❤️")
+     *   )),
+     *   @OA\Response(response=200, description="OK")
+     * )
+     */
+    public function react(Request $request, MessageThread $thread, Message $message)
+    {
+        $uid = $this->userId();
+        if (!$uid) return response()->json(['message' => 'Unauthenticated'], 401);
+        $this->assertParticipant($uid, $thread);
+
+        if ($message->thread_id !== $thread->id) {
+            return response()->json(['message' => 'Message hors de ce thread'], 422);
+        }
+
+        $data = $request->validate([
+            'emoji' => ['required','string','max:8'],
+        ]);
+        $emoji = $data['emoji'];
+
+        DB::transaction(function () use ($uid, $message, $emoji) {
+            // WhatsApp-like: une seule réaction par user & message → on remplace
+            DB::table('message_reactions')
+                ->where('message_id', $message->id)
+                ->where('user_id', $uid)
+                ->delete();
+
+            DB::table('message_reactions')->insert([
+                'message_id' => $message->id,
+                'user_id'    => $uid,
+                'emoji'      => $emoji,
+                'created_at' => now(),
+            ]);
+        });
+
+        return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Retirer sa réaction (DELETE avec body { emoji } via axios).
+     * @OA\Delete(
+     *   path="/api/messages/threads/{thread}/messages/{message}/reactions",
+     *   summary="Retirer ma réaction",
+     *   tags={"Messaging"},
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="thread", in="path", required=true, @OA\Schema(type="string")),
+     *   @OA\Parameter(name="message", in="path", required=true, @OA\Schema(type="string")),
+     *   @OA\RequestBody(@OA\JsonContent(@OA\Property(property="emoji", type="string", example="❤️"))),
+     *   @OA\Response(response=200, description="OK")
+     * )
+     */
+    public function unreact(Request $request, MessageThread $thread, Message $message)
+    {
+        $uid = $this->userId();
+        if (!$uid) return response()->json(['message' => 'Unauthenticated'], 401);
+        $this->assertParticipant($uid, $thread);
+
+        if ($message->thread_id !== $thread->id) {
+            return response()->json(['message' => 'Message hors de ce thread'], 422);
+        }
+
+        $emoji = $request->input('emoji'); // body dans DELETE → axios { data: { emoji } }
+        $q = DB::table('message_reactions')
+            ->where('message_id', $message->id)
+            ->where('user_id', $uid);
+        if ($emoji) $q->where('emoji', $emoji);
+        $q->delete();
+
+        return response()->json(['ok' => true]);
+    }
+
+    /* =======================================================================
+     * Messages programmés
+     * ======================================================================= */
+
+    /**
+     * Programmer un message.
+     * @OA\Post(
+     *   path="/api/messages/threads/{thread}/messages/schedule",
+     *   summary="Programmer l’envoi d’un message",
+     *   tags={"Messaging"},
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="thread", in="path", required=true, @OA\Schema(type="string")),
+     *   @OA\RequestBody(required=true, @OA\JsonContent(
+     *     required={"body","scheduled_at"},
+     *     @OA\Property(property="body", type="string", example="Rappel pour demain"),
+     *     @OA\Property(property="scheduled_at", type="string", format="date-time"),
+     *     @OA\Property(property="attachment_ids", type="array", @OA\Items(type="string"))
+     *   )),
+     *   @OA\Response(response=200, description="OK")
+     * )
+     */
+    public function scheduleMessage(Request $request, MessageThread $thread)
+    {
+        $uid = $this->userId();
+        if (!$uid) return response()->json(['message' => 'Unauthenticated'], 401);
+        $this->assertParticipant($uid, $thread);
+
+        $data = $request->validate([
+            'body'            => ['required','string','min:1','max:5000'],
+            'scheduled_at'    => ['required','date'],
+            'attachment_ids'  => ['array'],
+            'attachment_ids.*'=> ['string'],
+        ]);
+
+        $when = Carbon::parse($data['scheduled_at']);
+        if ($when->isPast()) {
+            return response()->json(['message' => 'La date/heure doit être future.'], 422);
+        }
+
+        // Optionnel : valider que les attachments appartiennent au thread et ne sont liés à aucun message
+        $attachments = [];
+        if (!empty($data['attachment_ids'])) {
+            $atts = DB::table('message_attachments')
+                ->whereIn('id', $data['attachment_ids'])
+                ->where('thread_id', $thread->id)
+                ->get();
+            $attachments = $atts->map(function ($a) {
+                return [
+                    'id'            => (string) $a->id,
+                    'url'           => $a->url ?? ($a->path ? Storage::url($a->path) : null),
+                    'name'          => $a->name,
+                    'mime_type'     => $a->mime_type,
+                    'size'          => (int) ($a->size ?? 0),
+                    'kind'          => $a->kind,
+                    'width'         => $a->width ? (int) $a->width : null,
+                    'height'        => $a->height ? (int) $a->height : null,
+                    'thumbnail_url' => $a->thumbnail_url,
+                ];
+            })->values()->all();
+        }
+
+        $id = DB::table('scheduled_messages')->insertGetId([
+            'thread_id'      => $thread->id,
+            'user_id'        => $uid,
+            'body'           => $data['body'],
+            'scheduled_at'   => $when,
+            'attachment_ids' => json_encode(array_column($attachments, 'id')),
+            'status'         => 'scheduled',
+            'created_at'     => now(),
+            'updated_at'     => now(),
+        ]);
+
+        return response()->json([
+            'data' => [
+                'id'            => (string) $id,
+                'thread_id'     => (string) $thread->id,
+                'body'          => $data['body'],
+                'scheduled_at'  => $when->toIso8601String(),
+                'attachments'   => $attachments,
+                'status'        => 'scheduled',
+            ]
+        ]);
+    }
+
+    /**
+     * Lister mes messages programmés sur un thread.
+     * @OA\Get(
+     *   path="/api/messages/threads/{thread}/messages/schedule",
+     *   summary="Lister les messages programmés",
+     *   tags={"Messaging"},
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="thread", in="path", required=true, @OA\Schema(type="string")),
+     *   @OA\Response(response=200, description="OK")
+     * )
+     */
+    public function listScheduledMessages(Request $request, MessageThread $thread)
+    {
+        $uid = $this->userId();
+        if (!$uid) return response()->json(['message' => 'Unauthenticated'], 401);
+        $this->assertParticipant($uid, $thread);
+
+        $rows = DB::table('scheduled_messages')
+            ->where('thread_id', $thread->id)
+            ->where('user_id', $uid)
+            ->where('status', 'scheduled')
+            ->orderBy('scheduled_at', 'asc')
+            ->get();
+
+        // Joindre les métadonnées d’attachments si besoin
+        $list = $rows->map(function ($r) {
+            $ids = json_decode($r->attachment_ids ?? '[]', true) ?: [];
+            $atts = [];
+            if (!empty($ids)) {
+                $atts = DB::table('message_attachments')->whereIn('id', $ids)->get()->map(function ($a) {
+                    return [
+                        'id'            => (string) $a->id,
+                        'url'           => $a->url ?? ($a->path ? Storage::url($a->path) : null),
+                        'name'          => $a->name,
+                        'mime_type'     => $a->mime_type,
+                        'size'          => (int) ($a->size ?? 0),
+                        'kind'          => $a->kind,
+                        'width'         => $a->width ? (int) $a->width : null,
+                        'height'        => $a->height ? (int) $a->height : null,
+                        'thumbnail_url' => $a->thumbnail_url,
+                    ];
+                })->values()->all();
+            }
+            return [
+                'id'           => (string) $r->id,
+                'thread_id'    => (string) $r->thread_id,
+                'body'         => $r->body,
+                'scheduled_at' => Carbon::parse($r->scheduled_at)->toIso8601String(),
+                'attachments'  => $atts,
+                'status'       => $r->status,
+                'created_at'   => optional($r->created_at)->toIso8601String(),
+            ];
+        });
+
+        return response()->json(['data' => $list]);
+    }
+
+    /**
+     * Annuler un message programmé.
+     * @OA\Delete(
+     *   path="/api/messages/threads/{thread}/messages/schedule/{scheduled}",
+     *   summary="Annuler un message programmé",
+     *   tags={"Messaging"},
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="thread", in="path", required=true, @OA\Schema(type="string")),
+     *   @OA\Parameter(name="scheduled", in="path", required=true, @OA\Schema(type="string")),
+     *   @OA\Response(response=200, description="OK")
+     * )
+     */
+    public function cancelScheduledMessage(Request $request, MessageThread $thread, $scheduled)
+    {
+        $uid = $this->userId();
+        if (!$uid) return response()->json(['message' => 'Unauthenticated'], 401);
+        $this->assertParticipant($uid, $thread);
+
+        $row = DB::table('scheduled_messages')
+            ->where('id', $scheduled)
+            ->where('thread_id', $thread->id)
+            ->where('user_id', $uid)
+            ->first();
+
+        if (!$row) {
+            return response()->json(['message' => 'Message programmé introuvable'], 404);
+        }
+        if ($row->status !== 'scheduled') {
+            return response()->json(['message' => 'Déjà traité'], 422);
+        }
+
+        DB::table('scheduled_messages')
+            ->where('id', $row->id)
+            ->update(['status' => 'canceled', 'updated_at' => now()]);
+
+        return response()->json(['status' => 'canceled']);
+    }
+
+    /* =======================================================================
+     * Helpers
+     * ======================================================================= */
 
     private function userId(): ?int
     {

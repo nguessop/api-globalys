@@ -278,18 +278,25 @@ $api->version('v1', function (Router $api) {
 
 
     Route::middleware('auth:api')->prefix('messages')->group(function () {
-        // Lister mes threads
+        // existant
         Route::get('/threads', [MessageThreadController::class, 'index']);
-
-        // Créer / récupérer le thread pour un service
         Route::post('/threads/ensure', [MessageThreadController::class, 'ensure']);
-
-        // Messages d’un thread
         Route::get('/threads/{thread}/messages',  [MessageThreadController::class, 'listMessages']);
         Route::post('/threads/{thread}/messages', [MessageThreadController::class, 'send']);
+        Route::post('/threads/{thread}/read',     [MessageThreadController::class, 'markRead']);
 
-        // Marquer un thread comme lu
-        Route::post('/threads/{thread}/read', [MessageThreadController::class, 'markRead']);
+        // 🔹 pièces jointes
+        Route::post('/threads/{thread}/attachments', [MessageThreadController::class, 'uploadAttachment']);
+
+        // 🔹 réactions (WhatsApp-like)
+        Route::post('/threads/{thread}/messages/{message}/reactions',  [MessageThreadController::class, 'react']);
+        Route::delete('/threads/{thread}/messages/{message}/reactions', [MessageThreadController::class, 'unreact']);
+
+        // 🔹 messages programmés
+        Route::post('/threads/{thread}/messages/schedule',                 [MessageThreadController::class, 'scheduleMessage']);
+        Route::get('/threads/{thread}/messages/schedule',                  [MessageThreadController::class, 'listScheduledMessages']);
+        Route::delete('/threads/{thread}/messages/schedule/{scheduled}',   [MessageThreadController::class, 'cancelScheduledMessage']);
     });
+
 
 });
