@@ -6,6 +6,7 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CommissionController;
 use App\Http\Controllers\InviteController;
 use App\Http\Controllers\MeetingController;
+use App\Http\Controllers\MessageThreadController;
 use App\Http\Controllers\MetricsController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\PaymentController;
@@ -273,6 +274,22 @@ $api->version('v1', function (Router $api) {
         Route::post('/subscribe',   [NewsletterController::class, 'subscribe']);
         Route::post('/unsubscribe', [NewsletterController::class, 'unsubscribe']);
         Route::get('/confirm/{token}', [NewsletterController::class, 'confirm']);
+    });
+
+
+    Route::middleware('auth:api')->prefix('messages')->group(function () {
+        // Lister mes threads
+        Route::get('/threads', [MessageThreadController::class, 'index']);
+
+        // Créer / récupérer le thread pour un service
+        Route::post('/threads/ensure', [MessageThreadController::class, 'ensure']);
+
+        // Messages d’un thread
+        Route::get('/threads/{thread}/messages',  [MessageThreadController::class, 'listMessages']);
+        Route::post('/threads/{thread}/messages', [MessageThreadController::class, 'send']);
+
+        // Marquer un thread comme lu
+        Route::post('/threads/{thread}/read', [MessageThreadController::class, 'markRead']);
     });
 
 });
