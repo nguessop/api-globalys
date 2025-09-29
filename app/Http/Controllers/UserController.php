@@ -28,8 +28,80 @@ class UserController extends Controller
             'assignSubscription',
             'revokeSubscription',
             'me',
+            'index'
         ]);
     }
+
+    /**
+     * @OA\Get(
+     *   path="/api/users/{user}/profile-views",
+     *   tags={"Users"},
+     *   summary="Nombre de vues du profil d’un utilisateur",
+     *   description="Retourne le nombre de fois qu’un profil a été vu.",
+     *   @OA\Parameter(
+     *     name="user",
+     *     in="path",
+     *     required=true,
+     *     description="ID du prestataire ou particulier",
+     *     @OA\Schema(type="integer", example=42)
+     *   ),
+     *   @OA\Response(
+     *     response=200,
+     *     description="OK",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="success", type="boolean", example=true),
+     *       @OA\Property(property="message", type="string", example="Nombre de vues du profil"),
+     *       @OA\Property(property="views", type="integer", example=120)
+     *     )
+     *   ),
+     *   @OA\Response(response=404, description="Utilisateur non trouvé")
+     * )
+     */
+    public function getProfileViews($userId)
+    {
+        $user = User::findOrFail($userId);
+
+        return response()->success([
+            'views' => $user->profile_views
+        ], 'Nombre de vues du profil');
+    }
+
+    /**
+     * @OA\Post(
+     *   path="/api/users/{user}/increment-profile-views",
+     *   tags={"Users"},
+     *   summary="Incrémenter les vues du profil",
+     *   description="Incrémente le compteur de vues lorsqu’un profil est visité.",
+     *   @OA\Parameter(
+     *     name="user",
+     *     in="path",
+     *     required=true,
+     *     description="ID du prestataire ou particulier",
+     *     @OA\Schema(type="integer", example=42)
+     *   ),
+     *   @OA\Response(
+     *     response=200,
+     *     description="OK",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="success", type="boolean", example=true),
+     *       @OA\Property(property="message", type="string", example="Vue enregistrée"),
+     *       @OA\Property(property="views", type="integer", example=121)
+     *     )
+     *   )
+     * )
+     */
+    public function incrementProfileViews($userId)
+    {
+        $user = \App\Models\User::findOrFail($userId);
+        $user->increment('profile_views');
+
+        return response()->success([
+            'views' => $user->profile_views
+        ], 'Vue enregistrée');
+    }
+
 
     /**
      * @OA\Get(

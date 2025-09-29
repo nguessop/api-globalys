@@ -4969,6 +4969,98 @@
                 ]
             }
         },
+        "/api/service-offerings/users/{user}/count": {
+            "get": {
+                "tags": [
+                    "ServiceOfferings"
+                ],
+                "summary": "Nombre de services d’un utilisateur",
+                "operationId": "96bf64a386e7b1425d46ec2c5d421815",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "count": {
+                                            "type": "integer",
+                                            "example": 5
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/service-offerings/users/{user}/count/online": {
+            "get": {
+                "tags": [
+                    "ServiceOfferings"
+                ],
+                "summary": "Nombre de services en ligne d’un utilisateur",
+                "description": "Retourne le nombre de services actifs (status = active) pour un utilisateur donné.",
+                "operationId": "5edc35828087e20ae64b44adf190b1c8",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "ID de l'utilisateur",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 42
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Nombre de services en ligne"
+                                        },
+                                        "count": {
+                                            "type": "integer",
+                                            "example": 5
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Utilisateur non trouvé"
+                    }
+                }
+            }
+        },
         "/api/service-offerings": {
             "get": {
                 "tags": [
@@ -7337,6 +7429,105 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/api/users/{user}/profile-views": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Nombre de vues du profil d’un utilisateur",
+                "description": "Retourne le nombre de fois qu’un profil a été vu.",
+                "operationId": "4130a91285caba411ba4d6c986c98514",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "ID du prestataire ou particulier",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 42
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Nombre de vues du profil"
+                                        },
+                                        "views": {
+                                            "type": "integer",
+                                            "example": 120
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Utilisateur non trouvé"
+                    }
+                }
+            }
+        },
+        "/api/users/{user}/increment-profile-views": {
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Incrémenter les vues du profil",
+                "description": "Incrémente le compteur de vues lorsqu’un profil est visité.",
+                "operationId": "21df0587d064607f87174fe8353b63b4",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "ID du prestataire ou particulier",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 42
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Vue enregistrée"
+                                        },
+                                        "views": {
+                                            "type": "integer",
+                                            "example": 121
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "/api/users": {

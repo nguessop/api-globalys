@@ -67,16 +67,10 @@ $api->version('v1', function (Router $api) {
         Route::get('/me',         [UserController::class, 'me']);
         Route::get('/roles',      [UserController::class, 'roles']);
 
-        // ✅ Routes fixes AVANT le paramètre dynamique
-        Route::get('/admins',       [UserController::class, 'admins']);
-        Route::get('/entreprises',  [UserController::class, 'entreprises']);
-        Route::get('/prestataires', [UserController::class, 'prestataires']);
-
-        Route::post('/',          [UserController::class, 'store']);
-
+        Route::get('/{user}/profile-views', [UserController::class, 'getProfileViews']);
+        Route::post('/{user}/increment-profile-views', [UserController::class, 'incrementProfileViews']);
         // ❗ Empêche {user} de matcher les mots réservés
         $notReserved = '^(?!admins$|entreprises$|prestataires$|me$|roles$).+';
-
         Route::get('/{user}',     [UserController::class, 'show'])->where('user', $notReserved);
         Route::put('/{user}',     [UserController::class, 'update'])->where('user', $notReserved);
         Route::patch('/{user}',   [UserController::class, 'update'])->where('user', $notReserved);
@@ -97,6 +91,13 @@ $api->version('v1', function (Router $api) {
         // NEW: meetings & contracts d’un user
         Route::get('/{user}/meetings',  [UserController::class, 'meetings'])->where('user', $notReserved);
         Route::get('/{user}/contracts', [UserController::class, 'contracts'])->where('user', $notReserved);
+
+        // ✅ Routes fixes AVANT le paramètre dynamique
+        Route::get('/admins',       [UserController::class, 'admins']);
+        Route::get('/entreprises',  [UserController::class, 'entreprises']);
+        Route::get('/prestataires', [UserController::class, 'prestataires']);
+
+        Route::post('/',          [UserController::class, 'store']);
     });
 
     Route::prefix('meetings')->group(function () {
@@ -155,6 +156,14 @@ $api->version('v1', function (Router $api) {
         Route::post('/{serviceOffering}/verify',    [ServiceOfferingController::class, 'verify']);
         Route::post('/{serviceOffering}/attachments', [ServiceOfferingController::class, 'saveAttachments']);
         Route::post('/{serviceOffering}/recompute-stats', [ServiceOfferingController::class, 'recomputeStats']);
+
+        // nouvelle route documentée
+        Route::get('/users/{user}/count', [ServiceOfferingController::class, 'countByUser']);
+
+        // nombre de services "en ligne" (actifs)
+        // routes/api.php
+        Route::get('/users/{user}/count/online', [ServiceOfferingController::class, 'countOnline']);
+
     });
 
     Route::prefix('bookings')->group(function () {

@@ -58,6 +58,8 @@ return new class extends Migration {
             $table->boolean('accepts_terms')->default(false);
             $table->boolean('wants_newsletter')->default(false);
 
+            $table->unsignedBigInteger('profile_views')->default(0);
+
             $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
 

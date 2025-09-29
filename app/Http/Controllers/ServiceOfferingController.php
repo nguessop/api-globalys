@@ -15,8 +15,71 @@ class ServiceOfferingController extends Controller
     public function __construct()
     {
         // Protège la création / modif / suppression
-        $this->middleware('auth:api')->except(['index', 'show', 'availability', 'incrementViews']);
+        $this->middleware('auth:api')->except(['index', 'show', 'availability', 'incrementViews', 'countByUser', 'countOnline']);
     }
+
+    /**
+     * @OA\Get(
+     *   path="/api/service-offerings/users/{user}/count",
+     *   tags={"ServiceOfferings"},
+     *   summary="Nombre de services d’un utilisateur",
+     *   @OA\Parameter(name="user", in="path", required=true, @OA\Schema(type="integer")),
+     *   @OA\Response(
+     *     response=200,
+     *     description="OK",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="success", type="boolean", example=true),
+     *       @OA\Property(property="count", type="integer", example=5)
+     *     )
+     *   )
+     * )
+     */
+    public function countByUser($userId)
+    {
+        $count = ServiceOffering::where('provider_id', $userId)->count();
+
+        return response()->success(['count' => $count], 'Nombre de services');
+    }
+
+    /**
+     * @OA\Get(
+     *   path="/api/service-offerings/users/{user}/count/online",
+     *   tags={"ServiceOfferings"},
+     *   summary="Nombre de services en ligne d’un utilisateur",
+     *   description="Retourne le nombre de services actifs (status = active) pour un utilisateur donné.",
+     *   @OA\Parameter(
+     *     name="user",
+     *     in="path",
+     *     required=true,
+     *     description="ID de l'utilisateur",
+     *     @OA\Schema(type="integer", example=42)
+     *   ),
+     *   @OA\Response(
+     *     response=200,
+     *     description="OK",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="success", type="boolean", example=true),
+     *       @OA\Property(property="message", type="string", example="Nombre de services en ligne"),
+     *       @OA\Property(property="count", type="integer", example=5)
+     *     )
+     *   ),
+     *   @OA\Response(response=404, description="Utilisateur non trouvé")
+     * )
+     */
+    public function countOnline($userId)
+    {
+        $count = ServiceOffering::where('provider_id', $userId)
+            ->where('status', 'active')
+            ->count();
+
+        return response()->success(['count' => $count], 'Nombre de services en ligne');
+    }
+
+
+
+
 
     /**
      * @OA\Get(
