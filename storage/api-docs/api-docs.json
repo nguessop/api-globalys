@@ -897,6 +897,228 @@
                 ]
             }
         },
+        "/api/bookings/users/{user}/bookings/pending-count": {
+            "get": {
+                "tags": [
+                    "Bookings"
+                ],
+                "summary": "Nombre de réservations en attente pour un prestataire",
+                "operationId": "9b29fdbef44cd1971e57ab852733d2b9",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "count": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Nombre de réservations en attente"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/bookings/users/{user}/bookings/confirmed-count": {
+            "get": {
+                "tags": [
+                    "Bookings"
+                ],
+                "summary": "Nombre de réservations confirmé pour un prestataire (entreprise ou particulier)",
+                "description": "Renvoie le nombre total de réservations en statut 'confirmed' associées aux services de ce prestataire.",
+                "operationId": "ffe3fe0ca6cb78952f0d6b2896d609ea",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "ID du prestataire",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "count": {
+                                            "type": "integer",
+                                            "example": 7
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/bookings/users/{user}/bookings/completed-count": {
+            "get": {
+                "tags": [
+                    "Bookings"
+                ],
+                "summary": "Nombre de réservations completé pour un prestataire (entreprise ou particulier)",
+                "description": "Renvoie le nombre total de réservations en statut 'completed' associées aux services de ce prestataire.",
+                "operationId": "2932dce8cefe8a970fd0af14bad6de4f",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "ID du prestataire",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "count": {
+                                            "type": "integer",
+                                            "example": 7
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/bookings/users/{user}/bookings/cancelled-count": {
+            "get": {
+                "tags": [
+                    "Bookings"
+                ],
+                "summary": "Nombre de réservations annulé pour un prestataire (entreprise ou particulier)",
+                "description": "Renvoie le nombre total de réservations en statut 'cancelled' associées aux services de ce prestataire.",
+                "operationId": "5cffe463fcc7a767197160b2c55d0769",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "ID du prestataire",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "count": {
+                                            "type": "integer",
+                                            "example": 7
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/bookings/users/{user}/bookings/total-revenue": {
+            "get": {
+                "tags": [
+                    "Bookings"
+                ],
+                "summary": "Revenus totaux d’un prestataire",
+                "description": "Retourne la somme totale des revenus (total_price) pour un prestataire dont les réservations sont en statut 'completed'.",
+                "operationId": "c1fd1566d0d88ee34474d71530307c15",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "ID du prestataire (particulier ou entreprise)",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "total_revenue": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 125000.5
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Revenus totaux calculés"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/bookings": {
             "get": {
                 "tags": [
@@ -4792,6 +5014,57 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/api/reviews/users/{user}/reviews/count": {
+            "get": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Compter les avis d’un utilisateur",
+                "operationId": "a7280015f33c3f39d20cd32fc9ef518d",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "ID de l’utilisateur (prestataire/entreprise/particulier)",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Nombre d’avis trouvés",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "count": {
+                                                    "type": "integer",
+                                                    "example": 12
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Nombre d’avis pour cet utilisateur"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "/api/reviews/{review}": {

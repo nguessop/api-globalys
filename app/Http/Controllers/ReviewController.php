@@ -10,7 +10,7 @@ class ReviewController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:api')->except(['index','show']);
+        $this->middleware('auth:api')->except(['index','show', 'reviewsCount']);
     }
 
     /**
@@ -72,6 +72,45 @@ class ReviewController extends Controller
 
         return response()->success($data, 'Liste des avis');
     }
+
+
+
+
+    /**
+     * @OA\Get(
+     *     path="/api/reviews/users/{user}/reviews/count",
+     *     summary="Compter les avis d’un utilisateur",
+     *     tags={"Reviews"},
+     *     @OA\Parameter(
+     *         name="user",
+     *         in="path",
+     *         required=true,
+     *         description="ID de l’utilisateur (prestataire/entreprise/particulier)",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Nombre d’avis trouvés",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="count", type="integer", example=12)
+     *             ),
+     *             @OA\Property(property="message", type="string", example="Nombre d’avis pour cet utilisateur")
+     *         )
+     *     )
+     * )
+     */
+    public function reviewsCount($userId)
+    {
+        $count = Review::where('provider_id', $userId)->count();
+
+        return response()->success([
+            'count' => $count,
+        ], 'Nombre d’avis pour cet utilisateur');
+    }
+
+
 
     /**
      * @OA\Get(

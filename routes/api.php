@@ -175,6 +175,15 @@ $api->version('v1', function (Router $api) {
         Route::match(['put','patch'],'/{booking}', [BookingController::class, 'update']);
         Route::delete('/{booking}',     [BookingController::class, 'destroy']);
 
+        Route::get('/users/{user}/bookings/pending-count', [BookingController::class, 'pendingCount']);
+        Route::get('/users/{user}/bookings/confirmed-count', [BookingController::class, 'confirmedCount']);
+        Route::get('/users/{user}/bookings/completed-count', [BookingController::class, 'completedCount']);
+        Route::get('/users/{user}/bookings/cancelled-count', [BookingController::class, 'cancelledCount']);
+
+        Route::get('/users/{user}/bookings/total-revenue', [BookingController::class, 'totalRevenue']);
+
+
+
         // actions
         Route::post('/{booking}/confirm',        [BookingController::class, 'confirm']);
         Route::post('/{booking}/start',          [BookingController::class, 'start']);      // optionnel
@@ -245,6 +254,9 @@ $api->version('v1', function (Router $api) {
         Route::post('/', [ReviewController::class, 'store'])->name('reviews.store');
         Route::match(['put','patch'], '/{review}', [ReviewController::class, 'update'])->name('reviews.update');
         Route::delete('/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
+
+        // routes/api.php
+        Route::get('/users/{user}/reviews/count', [ReviewController::class, 'reviewsCount']);
 
         Route::post('/{review}/approve', [ReviewController::class, 'approve'])->name('reviews.approve');
         Route::post('/{review}/unapprove', [ReviewController::class, 'unapprove'])->name('reviews.unapprove');

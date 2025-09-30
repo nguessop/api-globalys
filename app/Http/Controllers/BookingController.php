@@ -15,8 +15,198 @@ class BookingController extends Controller
     public function __construct()
     {
         // Protège création/modif/suppression ; index/show publics
-        $this->middleware('auth:api')->except(['index', 'show']);
+        $this->middleware('auth:api')->except(['index', 'show', 'pendingCount', 'confirmedCount', 'cancelledCount', 'totalRevenue']);
     }
+
+    /**
+     * @OA\Get(
+     *   path="/api/bookings/users/{user}/bookings/pending-count",
+     *   tags={"Bookings"},
+     *   summary="Nombre de réservations en attente pour un prestataire",
+     *   @OA\Parameter(
+     *     name="user",
+     *     in="path",
+     *     required=true,
+     *     @OA\Schema(type="integer")
+     *   ),
+     *   @OA\Response(
+     *     response=200,
+     *     description="OK",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="success", type="boolean", example=true),
+     *       @OA\Property(property="count", type="integer", example=5),
+     *       @OA\Property(property="message", type="string", example="Nombre de réservations en attente")
+     *     )
+     *   )
+     * )
+     */
+    public function pendingCount($userId)
+    {
+        $count = \App\Models\Booking::where('provider_id', $userId)
+            ->where('status', 'pending')
+            ->count();
+
+        return response()->success([
+            'count' => $count,
+        ], 'Nombre de réservations en attente');
+    }
+
+
+
+
+
+    /**
+     * @OA\Get(
+     *   path="/api/bookings/users/{user}/bookings/confirmed-count",
+     *   tags={"Bookings"},
+     *   summary="Nombre de réservations confirmé pour un prestataire (entreprise ou particulier)",
+     *   description="Renvoie le nombre total de réservations en statut 'confirmed' associées aux services de ce prestataire.",
+     *   @OA\Parameter(
+     *     name="user",
+     *     in="path",
+     *     required=true,
+     *     @OA\Schema(type="integer"),
+     *     description="ID du prestataire"
+     *   ),
+     *   @OA\Response(
+     *     response=200,
+     *     description="OK",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="success", type="boolean", example=true),
+     *       @OA\Property(property="count", type="integer", example=7)
+     *     )
+     *   )
+     * )
+     */
+    public function confirmedCount($userId)
+    {
+        $count = \App\Models\Booking::where('provider_id', $userId)
+            ->where('status', 'confirmed')
+            ->count();
+
+        return response()->success([
+            'count' => $count,
+        ], 'Nombre de réservations confirmé');
+    }
+
+
+
+    /**
+     * @OA\Get(
+     *   path="/api/bookings/users/{user}/bookings/completed-count",
+     *   tags={"Bookings"},
+     *   summary="Nombre de réservations completé pour un prestataire (entreprise ou particulier)",
+     *   description="Renvoie le nombre total de réservations en statut 'completed' associées aux services de ce prestataire.",
+     *   @OA\Parameter(
+     *     name="user",
+     *     in="path",
+     *     required=true,
+     *     @OA\Schema(type="integer"),
+     *     description="ID du prestataire"
+     *   ),
+     *   @OA\Response(
+     *     response=200,
+     *     description="OK",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="success", type="boolean", example=true),
+     *       @OA\Property(property="count", type="integer", example=7)
+     *     )
+     *   )
+     * )
+     */
+    public function completedCount($userId)
+    {
+        $count = \App\Models\Booking::where('provider_id', $userId)
+            ->where('status', 'completed')
+            ->count();
+
+        return response()->success([
+            'count' => $count,
+        ], 'Nombre de réservations completé');
+    }
+
+
+
+    /**
+     * @OA\Get(
+     *   path="/api/bookings/users/{user}/bookings/cancelled-count",
+     *   tags={"Bookings"},
+     *   summary="Nombre de réservations annulé pour un prestataire (entreprise ou particulier)",
+     *   description="Renvoie le nombre total de réservations en statut 'cancelled' associées aux services de ce prestataire.",
+     *   @OA\Parameter(
+     *     name="user",
+     *     in="path",
+     *     required=true,
+     *     @OA\Schema(type="integer"),
+     *     description="ID du prestataire"
+     *   ),
+     *   @OA\Response(
+     *     response=200,
+     *     description="OK",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="success", type="boolean", example=true),
+     *       @OA\Property(property="count", type="integer", example=7)
+     *     )
+     *   )
+     * )
+     */
+    public function cancelledCount($userId)
+    {
+        $count = \App\Models\Booking::where('provider_id', $userId)
+            ->where('status', 'cancelled')
+            ->count();
+
+        return response()->success([
+            'count' => $count,
+        ], 'Nombre de réservations annulé');
+    }
+
+
+
+    /**
+     * @OA\Get(
+     *   path="/api/bookings/users/{user}/bookings/total-revenue",
+     *   tags={"Bookings"},
+     *   summary="Revenus totaux d’un prestataire",
+     *   description="Retourne la somme totale des revenus (total_price) pour un prestataire dont les réservations sont en statut 'completed'.",
+     *   @OA\Parameter(
+     *     name="user",
+     *     in="path",
+     *     required=true,
+     *     @OA\Schema(type="integer"),
+     *     description="ID du prestataire (particulier ou entreprise)"
+     *   ),
+     *   @OA\Response(
+     *     response=200,
+     *     description="OK",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="success", type="boolean", example=true),
+     *       @OA\Property(property="total_revenue", type="number", format="float", example=125000.50),
+     *       @OA\Property(property="message", type="string", example="Revenus totaux calculés")
+     *     )
+     *   )
+     * )
+     */
+    public function totalRevenue($userId)
+    {
+        $total = \App\Models\Booking::where('provider_id', $userId)
+            ->where('status', 'completed')
+            ->sum('total_price');
+
+        return response()->success([
+            'total_revenue' => $total,
+        ], 'Revenus totaux calculés');
+    }
+
+
+
+
+
 
     /**
      * @OA\Get(
