@@ -98,6 +98,11 @@ $api->version('v1', function (Router $api) {
         Route::get('/prestataires', [UserController::class, 'prestataires']);
 
         Route::post('/',          [UserController::class, 'store']);
+
+        // 🔹 nouvelles routes
+        Route::get('/by-account-type/{type}', [UserController::class, 'byAccountType']);
+        Route::get('/by-user-type/{type}', [UserController::class, 'byUserType']);
+        Route::get('/stats', [UserController::class, 'stats']);
     });
 
     Route::prefix('meetings')->group(function () {
@@ -163,6 +168,10 @@ $api->version('v1', function (Router $api) {
         // nombre de services "en ligne" (actifs)
         // routes/api.php
         Route::get('/users/{user}/count/online', [ServiceOfferingController::class, 'countOnline']);
+
+        // 🚀 nouvelles routes documentées
+        Route::get('/sub-categories/{subCategory}/count', [ServiceOfferingController::class, 'countBySubCategory']);
+        Route::get('/stats', [ServiceOfferingController::class, 'stats']);
 
     });
 

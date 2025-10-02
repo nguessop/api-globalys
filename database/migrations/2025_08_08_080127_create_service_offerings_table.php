@@ -18,35 +18,39 @@ return new class extends Migration {
             $table->string('title');
             $table->text('description')->nullable();
 
-            // Tarifs
+            // Tarifs principaux
             $table->decimal('price_amount', 12, 2);
             $table->enum('price_unit', ['hour','service','km','course','kg','jour'])->default('service');
-            $table->string('currency', 3)->default('XAF');          // XAF/EUR/...
-            $table->decimal('tax_rate', 5, 2)->nullable();          // ex: 19.25
-            $table->decimal('discount_amount', 12, 2)->nullable();  // ou discount_percent
+            $table->string('currency', 3)->default('XAF');
+            $table->decimal('tax_rate', 5, 2)->nullable();
+            $table->decimal('discount_amount', 12, 2)->nullable();
 
-            // Zone d'intervention
+            // Marketplace / E-commerce
+            $table->unsignedInteger('stock_quantity')->nullable(); // pour produits ou offres limitées
+            $table->boolean('is_limited_stock')->default(false);   // service limité ou pas
+
+            // Zone d’intervention
             $table->string('city')->nullable();
-            $table->string('country', 2)->nullable(); // ISO-3166-1 alpha-2 (CM, FR, ...)
+            $table->string('country', 2)->nullable();
             $table->string('address')->nullable();
             $table->unsignedSmallInteger('coverage_km')->nullable();
-            $table->boolean('on_site')->default(true);   // chez le client
-            $table->boolean('at_provider')->default(false); // chez le prestataire
+            $table->boolean('on_site')->default(true);
+            $table->boolean('at_provider')->default(false);
             $table->decimal('lat', 10, 7)->nullable();
             $table->decimal('lng', 10, 7)->nullable();
 
             // Délais / SLA & capacité
             $table->unsignedSmallInteger('min_delay_hours')->nullable();
             $table->unsignedSmallInteger('max_delay_hours')->nullable();
-            $table->unsignedInteger('duration_minutes')->nullable(); // durée typique d’une prestation
-            $table->unsignedSmallInteger('capacity')->default(1);    // nb de clients par créneau (si besoin)
+            $table->unsignedInteger('duration_minutes')->nullable();
+            $table->unsignedSmallInteger('capacity')->default(1);
 
             // Statut / publication / modération
             $table->enum('status', ['draft','active','paused','archived'])->default('draft');
             $table->timestamp('published_at')->nullable();
-            $table->boolean('featured')->default(false);      // mise en avant
-            $table->boolean('is_verified')->default(false);   // vérification KYC/licence interne
-            $table->string('status_reason')->nullable();      // raison d’un pause/refus
+            $table->boolean('featured')->default(false);
+            $table->boolean('is_verified')->default(false);
+            $table->string('status_reason')->nullable();
 
             // Dérivés / perfs
             $table->decimal('avg_rating', 3, 2)->default(0);
@@ -56,8 +60,8 @@ return new class extends Migration {
             $table->unsignedBigInteger('favorites_count')->default(0);
 
             // Médias / extra
-            $table->json('attachments')->nullable(); // photos, certificats, PDF…
-            $table->json('metadata')->nullable();    // extensible sans migration
+            $table->json('attachments')->nullable();
+            $table->json('metadata')->nullable();
 
             $table->timestamps();
             $table->softDeletes();

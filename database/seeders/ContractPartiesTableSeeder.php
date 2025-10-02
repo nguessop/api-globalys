@@ -12,8 +12,8 @@ class ContractPartiesTableSeeder extends Seeder
         $contract = Contract::first();
         if (!$contract) return;
 
-        $provider = User::where('email','prestataire@globalys.com')->firstOrFail();
-        $client   = User::where('email','client@globalys.com')->firstOrFail();
+        $provider = User::where('email','prestataire1@globalys.com')->firstOrFail();
+        $client   = User::where('email','client1@globalys.com')->firstOrFail();
 
         // Prestataire
         ContractPartie::firstOrCreate(

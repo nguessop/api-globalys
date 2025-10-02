@@ -660,4 +660,83 @@ class ServiceOfferingController extends Controller
         $validated = $req->validate($rules);
         return $validated;
     }
+
+    /**
+     * @OA\Get(
+     *   path="/api/service-offerings/sub-categories/{subCategory}/count",
+     *   tags={"ServiceOfferings"},
+     *   summary="Nombre de services pour une sous-catégorie",
+     *   description="Retourne combien de services appartiennent à une sous-catégorie donnée.",
+     *   @OA\Parameter(
+     *     name="subCategory",
+     *     in="path",
+     *     required=true,
+     *     description="ID de la sous-catégorie",
+     *     @OA\Schema(type="integer", example=15)
+     *   ),
+     *   @OA\Response(
+     *     response=200,
+     *     description="OK",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="success", type="boolean", example=true),
+     *       @OA\Property(property="message", type="string", example="Nombre de services pour la sous-catégorie"),
+     *       @OA\Property(property="count", type="integer", example=12)
+     *     )
+     *   ),
+     *   @OA\Response(response=404, description="Sous-catégorie non trouvée")
+     * )
+     */
+    public function countBySubCategory($subCategoryId)
+    {
+        $count = ServiceOffering::where('sub_category_id', $subCategoryId)->count();
+
+        return response()->success(
+            ['count' => $count],
+            "Nombre de services pour la sous-catégorie {$subCategoryId}"
+        );
+    }
+
+
+    /**
+     * @OA\Get(
+     *   path="/api/service-offerings/stats",
+     *   tags={"ServiceOfferings"},
+     *   summary="Statistiques globales des services",
+     *   description="Retourne un résumé global : total, actifs, vérifiés, en pause, archivés, mis en avant.",
+     *   @OA\Response(
+     *     response=200,
+     *     description="OK",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="success", type="boolean", example=true),
+     *       @OA\Property(property="message", type="string", example="Statistiques globales des services"),
+     *       @OA\Property(property="data", type="object",
+     *         example={
+     *           "total": 120,
+     *           "actifs": 85,
+     *           "verifies": 60,
+     *           "en_pause": 10,
+     *           "archives": 5,
+     *           "mis_en_avant": 20
+     *         }
+     *       )
+     *     )
+     *   )
+     * )
+     */
+    public function stats()
+    {
+        $stats = [
+            'total'        => ServiceOffering::count(),
+            'actifs'       => ServiceOffering::where('status', 'active')->count(),
+            'verifies'     => ServiceOffering::where('is_verified', true)->count(),
+            'en_pause'     => ServiceOffering::where('status', 'paused')->count(),
+            'archives'     => ServiceOffering::where('status', 'archived')->count(),
+            'mis_en_avant' => ServiceOffering::where('featured', true)->count(),
+        ];
+
+        return response()->success($stats, 'Statistiques globales des services');
+    }
+
 }

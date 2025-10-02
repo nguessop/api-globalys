@@ -26,11 +26,16 @@ class SubCategory extends Model
         'providers_count',
         'average_price',
         'description',
+        'form_schema',
     ];
 
     protected $casts = [
         'category_id'     => 'integer',
         'providers_count' => 'integer',
+        'average_price'   => 'string',
+        'form_schema'     => 'array', // pour que le JSON soit exploitable directement
+        'created_at'      => 'datetime',
+        'updated_at'      => 'datetime',
     ];
 
     /* ====================================================================== */
@@ -83,19 +88,18 @@ class SubCategory extends Model
         return $this->hasMany(Contract::class, 'sub_category_id');
     }
 
-    /** Contrats par statut (draft|sent|partially_signed|signed|cancelled|expired) */
+    /** Contrats par statut */
     public function contractsByStatus(string $status): HasMany
     {
         return $this->contracts()->where('status', $status);
     }
 
-    /** Templates de contrat associés (portée métier) */
+    /** Templates de contrat associés */
     public function contractTemplates(): HasMany
     {
         return $this->hasMany(ContractTemplate::class, 'sub_category_id');
     }
 
-    /** Templates actifs & effectifs maintenant */
     public function activeContractTemplates(): HasMany
     {
         return $this->contractTemplates()
@@ -103,13 +107,6 @@ class SubCategory extends Model
             ->effectiveNow();
     }
 
-    /**
-     * Récupère le “meilleur” template applicable :
-     * - filtré par locale si fournie
-     * - visible pour l’audience ('provider'|'client'|'both')
-     * - actif & effectif
-     * - version la plus élevée
-     */
     public function bestContractTemplate(?string $locale = null, string $audience = 'both'): ?ContractTemplate
     {
         $query = $this->contractTemplates()
@@ -127,6 +124,12 @@ class SubCategory extends Model
             ->first();
     }
 
+    /** Soumissions (liées au form_schema dynamique) */
+    public function submissions(): HasMany
+    {
+        return $this->hasMany(Submission::class, 'sub_category_id');
+    }
+
     /* ====================================================================== */
     /* SCOPES                                                                 */
     /* ====================================================================== */
@@ -134,6 +137,11 @@ class SubCategory extends Model
     public function scopeSlug($query, string $slug)
     {
         return $query->where('slug', $slug);
+    }
+
+    public function scopeNameLike($query, string $name)
+    {
+        return $query->where('name', 'like', "%{$name}%");
     }
 
     /* ====================================================================== */
@@ -171,9 +179,6 @@ class SubCategory extends Model
         });
     }
 
-    /**
-     * Génère un slug unique globalement.
-     */
     protected static function uniqueSlug(?string $base, ?int $ignoreId = null): string
     {
         $base = Str::slug((string) $base);
@@ -219,7 +224,7 @@ class SubCategory extends Model
     }
 
     /* ====================================================================== */
-    /* ACCESSORS                                                               */
+    /* ACCESSORS                                                              */
     /* ====================================================================== */
 
     protected $appends = ['primary_image_url'];

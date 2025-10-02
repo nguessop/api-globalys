@@ -7,7 +7,6 @@ use App\Models\ServiceOffering;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use OpenApi\Annotations as OA;
 
 class CategoryController extends Controller
 {
@@ -21,7 +20,7 @@ class CategoryController extends Controller
      * @OA\Get(
      *   path="/api/categories",
      *   tags={"Categories"},
-     *   summary="Lister les catégories (avec sous-catégories)",
+     *   summary="Lister les catégories avec sous-catégories",
      *   @OA\Parameter(
      *     name="search",
      *     in="query",
@@ -30,34 +29,28 @@ class CategoryController extends Controller
      *   ),
      *   @OA\Response(
      *     response=200,
-     *     description="OK",
-     *     @OA\JsonContent(
-     *       type="object",
+     *     description="Liste des catégories",
+     *     @OA\JsonContent(type="object",
      *       @OA\Property(property="success", type="boolean", example=true),
-     *       @OA\Property(property="message", type="string", example="Affichage parfait"),
-     *       @OA\Property(
-     *         property="data",
-     *         type="array",
+     *       @OA\Property(property="message", type="string", example="Catégories et sous-catégories affichées"),
+     *       @OA\Property(property="data", type="array",
      *         @OA\Items(
      *           type="object",
      *           @OA\Property(property="id", type="integer", example=1),
-     *           @OA\Property(property="slug", type="string", example="nettoyage"),
-     *           @OA\Property(property="name", type="string", example="Nettoyage"),
-     *           @OA\Property(property="icon", type="string", nullable=true, example="broom"),
-     *           @OA\Property(property="color_class", type="string", nullable=true, example="bg-indigo-500"),
-     *           @OA\Property(property="description", type="string", nullable=true, example="Services de nettoyage"),
-     *           @OA\Property(property="sub_categories_count", type="integer", example=5),
-     *           @OA\Property(
-     *             property="sub_categories",
-     *             type="array",
+     *           @OA\Property(property="slug", type="string", example="sante"),
+     *           @OA\Property(property="name", type="string", example="Santé & Bien-être"),
+     *           @OA\Property(property="icon", type="string", example="heart"),
+     *           @OA\Property(property="description", type="string", example="Santé, beauté, sport"),
+     *           @OA\Property(property="sub_categories_count", type="integer", example=4),
+     *           @OA\Property(property="sub_categories", type="array",
      *             @OA\Items(
-     *               type="object",
-     *               @OA\Property(property="id", type="integer", example=11),
+     *               @OA\Property(property="id", type="integer", example=10),
      *               @OA\Property(property="category_id", type="integer", example=1),
-     *               @OA\Property(property="slug", type="string", example="nettoyage-bureaux"),
-     *               @OA\Property(property="name", type="string", example="Nettoyage de bureaux"),
-     *               @OA\Property(property="icon", type="string", nullable=true, example="building"),
-     *               @OA\Property(property="service_offerings_count", type="integer", example=12)
+     *               @OA\Property(property="slug", type="string", example="teleconsultation"),
+     *               @OA\Property(property="name", type="string", example="Téléconsultation"),
+     *               @OA\Property(property="icon", type="string", example="stethoscope"),
+     *               @OA\Property(property="description", type="string", example="Consultation médicale à distance"),
+     *               @OA\Property(property="service_offerings_count", type="integer", example=15)
      *             )
      *           )
      *         )
@@ -69,10 +62,15 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         $query = Category::query()
+            ->whereNotNull('parent_id') // ✅ uniquement les catégories racines
             ->withCount('subCategories')
-            ->with(['subCategories' => function ($q) {
-                $q->select();
-            }]);
+            ->with([
+                'subCategories' => function ($q) {
+                    $q->select('id', 'category_id', 'slug', 'name', 'icon', 'description')
+                        ->withCount('serviceOfferings')
+                        ->orderBy('name');
+                },
+            ]);
 
         if ($request->filled('search')) {
             $s = $request->get('search');
@@ -81,57 +79,31 @@ class CategoryController extends Controller
 
         $categories = $query->orderBy('name')->get();
 
-        return response()->success($categories, 'Affichage parfait');
+        // ⚡ Normalisation pour que le front reçoive toujours `sub_categories`
+        $categories->transform(function ($cat) {
+            $cat->sub_categories = $cat->subCategories;
+            unset($cat->subCategories);
+            return $cat;
+        });
+
+        return response()->success($categories, 'Catégories et sous-catégories affichées');
     }
+
+
 
     /**
      * @OA\Get(
      *   path="/api/categories/{category}",
      *   tags={"Categories"},
      *   summary="Détails d’une catégorie (par slug)",
-     *   description="Le modèle Category utilise getRouteKeyName() = 'slug'.",
      *   @OA\Parameter(
      *     name="category",
      *     in="path",
      *     required=true,
      *     description="Slug de la catégorie",
-     *     @OA\Schema(type="string", example="nettoyage")
+     *     @OA\Schema(type="string", example="sante")
      *   ),
-     *   @OA\Response(
-     *     response=200,
-     *     description="OK",
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="success", type="boolean", example=true),
-     *       @OA\Property(property="message", type="string", example="Détails complets de la catégorie récupérés"),
-     *       @OA\Property(
-     *         property="data",
-     *         type="array",
-     *         @OA\Items(
-     *           type="object",
-     *           @OA\Property(property="id", type="integer", example=1),
-     *           @OA\Property(property="slug", type="string", example="nettoyage"),
-     *           @OA\Property(property="name", type="string", example="Nettoyage"),
-     *           @OA\Property(property="icon", type="string", nullable=true, example="broom"),
-     *           @OA\Property(property="color_class", type="string", nullable=true, example="bg-indigo-500"),
-     *           @OA\Property(property="description", type="string", nullable=true),
-     *           @OA\Property(
-     *             property="sub_categories",
-     *             type="array",
-     *             @OA\Items(
-     *               type="object",
-     *               @OA\Property(property="id", type="integer", example=11),
-     *               @OA\Property(property="category_id", type="integer", example=1),
-     *               @OA\Property(property="slug", type="string", example="nettoyage-bureaux"),
-     *               @OA\Property(property="name", type="string", example="Nettoyage de bureaux"),
-     *               @OA\Property(property="icon", type="string", nullable=true, example="building"),
-     *               @OA\Property(property="service_offerings_count", type="integer", example=12)
-     *             )
-     *           )
-     *         )
-     *       )
-     *     )
-     *   ),
+     *   @OA\Response(response=200, description="Détails de la catégorie"),
      *   @OA\Response(response=404, description="Not Found")
      * )
      */
@@ -139,12 +111,13 @@ class CategoryController extends Controller
     {
         $res = $category->load([
             'subCategories' => function ($q) {
-                $q->select('id', 'category_id', 'slug', 'name', 'icon')
-                    ->withCount('serviceOfferings');
+                $q->select('id', 'category_id', 'slug', 'name', 'icon', 'description')
+                    ->withCount('serviceOfferings')
+                    ->orderBy('name');
             },
-        ])->toArray();
+        ]);
 
-        return response()->success([$res], 'Détails complets de la catégorie récupérés');
+        return response()->success($res, 'Détails complets de la catégorie récupérés');
     }
 
     /**
@@ -157,42 +130,20 @@ class CategoryController extends Controller
      *     in="path",
      *     required=true,
      *     description="Slug de la catégorie",
-     *     @OA\Schema(type="string", example="nettoyage")
+     *     @OA\Schema(type="string", example="sante")
      *   ),
-     *   @OA\Response(
-     *     response=200,
-     *     description="OK",
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="success", type="boolean", example=true),
-     *       @OA\Property(property="message", type="string", example="Vos sous catégories affichées"),
-     *       @OA\Property(
-     *         property="data",
-     *         type="array",
-     *         @OA\Items(
-     *           type="object",
-     *           @OA\Property(property="id", type="integer", example=11),
-     *           @OA\Property(property="category_id", type="integer", example=1),
-     *           @OA\Property(property="slug", type="string", example="nettoyage-bureaux"),
-     *           @OA\Property(property="name", type="string", example="Nettoyage de bureaux"),
-     *           @OA\Property(property="icon", type="string", nullable=true, example="building"),
-     *           @OA\Property(property="service_offerings_count", type="integer", example=12)
-     *         )
-     *       )
-     *     )
-     *   ),
-     *   @OA\Response(response=404, description="Not Found")
+     *   @OA\Response(response=200, description="Sous-catégories listées")
      * )
      */
     public function subcategories(Category $category)
     {
         $subs = $category->subCategories()
-            ->select()
+            ->select('id', 'category_id', 'slug', 'name', 'icon', 'description')
             ->withCount('serviceOfferings')
             ->orderBy('name')
             ->get();
 
-        return response()->success($subs, 'Vos sous catégories affichées');
+        return response()->success($subs, 'Sous-catégories affichées');
     }
 
     /**
@@ -205,38 +156,15 @@ class CategoryController extends Controller
      *     required=true,
      *     @OA\JsonContent(
      *       required={"name"},
-     *       @OA\Property(property="name", type="string", example="Nettoyage"),
-     *       @OA\Property(property="slug", type="string", nullable=true, example="nettoyage"),
-     *       @OA\Property(property="icon", type="string", nullable=true, example="broom"),
-     *       @OA\Property(property="color_class", type="string", nullable=true, example="bg-indigo-500"),
-     *       @OA\Property(property="description", type="string", nullable=true, example="Services de nettoyage")
+     *       @OA\Property(property="name", type="string", example="Santé & Bien-être"),
+     *       @OA\Property(property="slug", type="string", example="sante"),
+     *       @OA\Property(property="icon", type="string", example="heart"),
+     *       @OA\Property(property="color_class", type="string", example="bg-pink-500"),
+     *       @OA\Property(property="description", type="string", example="Santé, beauté, sport")
      *     )
      *   ),
-     *   @OA\Response(
-     *     response=200,
-     *     description="Créé",
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="success", type="boolean", example=true),
-     *       @OA\Property(property="message", type="string", example="Catégorie créée avec succès"),
-     *       @OA\Property(
-     *         property="data",
-     *         type="array",
-     *         @OA\Items(
-     *           type="object",
-     *           @OA\Property(property="id", type="integer", example=1),
-     *           @OA\Property(property="slug", type="string", example="nettoyage"),
-     *           @OA\Property(property="name", type="string", example="Nettoyage"),
-     *           @OA\Property(property="icon", type="string", nullable=true),
-     *           @OA\Property(property="color_class", type="string", nullable=true),
-     *           @OA\Property(property="description", type="string", nullable=true),
-     *           @OA\Property(property="sub_categories", type="array", @OA\Items(type="object"))
-     *         )
-     *       )
-     *     )
-     *   ),
-     *   @OA\Response(response=422, description="Validation error"),
-     *   @OA\Response(response=401, description="Unauthenticated")
+     *   @OA\Response(response=201, description="Catégorie créée"),
+     *   @OA\Response(response=422, description="Validation error")
      * )
      */
     public function store(Request $request)
@@ -253,102 +181,27 @@ class CategoryController extends Controller
 
         $category->load([
             'subCategories' => function ($q) {
-                $q->select('id', 'category_id', 'slug', 'name', 'icon')
+                $q->select('id', 'category_id', 'slug', 'name', 'icon', 'description')
                     ->withCount('serviceOfferings');
             },
         ]);
 
-        return response()->success([$category->toArray()], 'Catégorie créée avec succès');
+        return response()->success($category, 'Catégorie créée avec succès', 201);
     }
 
     /**
-     * @OA\Patch(
-     *   path="/api/categories/{category}",
-     *   tags={"Categories"},
-     *   summary="Mettre à jour une catégorie (PATCH, par slug)",
-     *   security={{"bearerAuth":{}}},
-     *   @OA\Parameter(
-     *     name="category",
-     *     in="path",
-     *     required=true,
-     *     description="Slug de la catégorie",
-     *     @OA\Schema(type="string", example="nettoyage")
-     *   ),
-     *   @OA\RequestBody(
-     *     required=true,
-     *     @OA\JsonContent(
-     *       @OA\Property(property="name", type="string", example="Nettoyage & Entretien"),
-     *       @OA\Property(property="slug", type="string", nullable=true, example="nettoyage-entretien"),
-     *       @OA\Property(property="icon", type="string", nullable=true, example="broom"),
-     *       @OA\Property(property="color_class", type="string", nullable=true, example="bg-indigo-600"),
-     *       @OA\Property(property="description", type="string", nullable=true, example="Mise à jour de la description")
-     *     )
-     *   ),
-     *   @OA\Response(
-     *     response=200,
-     *     description="OK",
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="success", type="boolean", example=true),
-     *       @OA\Property(property="message", type="string", example="Catégorie mise à jour avec succès"),
-     *       @OA\Property(
-     *         property="data",
-     *         type="array",
-     *         @OA\Items(
-     *           type="object",
-     *           @OA\Property(property="id", type="integer", example=1),
-     *           @OA\Property(property="slug", type="string", example="nettoyage-entretien"),
-     *           @OA\Property(property="name", type="string", example="Nettoyage & Entretien"),
-     *           @OA\Property(property="icon", type="string", nullable=true),
-     *           @OA\Property(property="color_class", type="string", nullable=true),
-     *           @OA\Property(property="description", type="string", nullable=true),
-     *           @OA\Property(
-     *             property="sub_categories",
-     *             type="array",
-     *             @OA\Items(
-     *               type="object",
-     *               @OA\Property(property="id", type="integer", example=11),
-     *               @OA\Property(property="category_id", type="integer", example=1),
-     *               @OA\Property(property="slug", type="string", example="nettoyage-bureaux"),
-     *               @OA\Property(property="name", type="string", example="Nettoyage de bureaux"),
-     *               @OA\Property(property="icon", type="string", nullable=true),
-     *               @OA\Property(property="service_offerings_count", type="integer", example=12)
-     *             )
-     *           )
-     *         )
-     *       )
-     *     )
-     *   ),
-     *   @OA\Response(response=422, description="Validation error"),
-     *   @OA\Response(response=401, description="Unauthenticated"),
-     *   @OA\Response(response=404, description="Not Found")
-     * )
-     *
      * @OA\Put(
      *   path="/api/categories/{category}",
      *   tags={"Categories"},
-     *   summary="Mettre à jour une catégorie (PUT, par slug)",
+     *   summary="Mettre à jour une catégorie",
      *   security={{"bearerAuth":{}}},
-     *   @OA\Parameter(
-     *     name="category",
-     *     in="path",
-     *     required=true,
-     *     description="Slug de la catégorie",
-     *     @OA\Schema(type="string", example="nettoyage")
-     *   ),
-     *   @OA\RequestBody(
-     *     required=true,
-     *     @OA\JsonContent(
-     *       @OA\Property(property="name", type="string", example="Nettoyage & Entretien"),
-     *       @OA\Property(property="slug", type="string", nullable=true, example="nettoyage-entretien"),
-     *       @OA\Property(property="icon", type="string", nullable=true, example="broom"),
-     *       @OA\Property(property="color_class", type="string", nullable=true, example="bg-indigo-600"),
-     *       @OA\Property(property="description", type="string", nullable=true, example="Mise à jour de la description")
-     *     )
-     *   ),
-     *   @OA\Response(response=200, description="OK"),
-     *   @OA\Response(response=422, description="Validation error"),
-     *   @OA\Response(response=401, description="Unauthenticated"),
+     *   @OA\Parameter(name="category", in="path", required=true, @OA\Schema(type="string")),
+     *   @OA\RequestBody(required=true, @OA\JsonContent(
+     *     @OA\Property(property="name", type="string", example="Santé & Bien-être modifié"),
+     *     @OA\Property(property="slug", type="string", example="sante-bien-etre"),
+     *     @OA\Property(property="description", type="string", example="Mise à jour de la description")
+     *   )),
+     *   @OA\Response(response=200, description="Mise à jour réussie"),
      *   @OA\Response(response=404, description="Not Found")
      * )
      */
@@ -366,43 +219,24 @@ class CategoryController extends Controller
 
         $category->load([
             'subCategories' => function ($q) {
-                $q->select('id', 'category_id', 'slug', 'name', 'icon')
+                $q->select('id', 'category_id', 'slug', 'name', 'icon', 'description')
                     ->withCount('serviceOfferings');
             },
         ]);
 
-        return response()->success([$category->toArray()], 'Catégorie mise à jour avec succès');
+        return response()->success($category, 'Catégorie mise à jour avec succès');
     }
 
-
     /**
-     * Liste paginée des prestataires ayant au moins une offre dans la catégorie.
-     *
      * @OA\Get(
      *   path="/api/categories/{category}/providers",
      *   tags={"Categories"},
-     *   summary="Prestataires par catégorie",
-     *   description="Retourne les utilisateurs (prestataires) qui ont au moins une service_offering dans une sous-catégorie de cette catégorie.",
-     *   @OA\Parameter(
-     *     name="category",
-     *     in="path",
-     *     required=true,
-     *     description="Slug (ou ID si le binding est configuré ainsi) de la catégorie",
-     *     @OA\Schema(type="string")
-     *   ),
+     *   summary="Lister les prestataires par catégorie",
+     *   @OA\Parameter(name="category", in="path", required=true, @OA\Schema(type="string")),
      *   @OA\Parameter(name="per_page", in="query", @OA\Schema(type="integer", default=12)),
      *   @OA\Parameter(name="city", in="query", description="Filtrer par ville", @OA\Schema(type="string")),
-     *   @OA\Parameter(name="search", in="query", description="Nom/prénom/entreprise", @OA\Schema(type="string")),
-     *   @OA\Response(
-     *     response=200,
-     *     description="OK",
-     *     @OA\JsonContent(
-     *       type="object",
-     *       @OA\Property(property="success", type="boolean", example=true),
-     *       @OA\Property(property="message", type="string", example="Prestataires listés avec succès"),
-     *       @OA\Property(property="data", type="object")
-     *     )
-     *   )
+     *   @OA\Parameter(name="search", in="query", description="Filtrer par nom ou entreprise", @OA\Schema(type="string")),
+     *   @OA\Response(response=200, description="Prestataires listés")
      * )
      */
     public function providers(Request $request, Category $category)
@@ -411,15 +245,6 @@ class CategoryController extends Controller
         $city    = $request->get('city');
         $search  = $request->get('search');
 
-        // includes optionnels (whitelist simple)
-        $allowedIncludes = ['role','currentSubscription','subscriptions','serviceOfferings','reviewsReceived','availabilitySlots'];
-        $includes = [];
-        if ($inc = $request->get('include')) {
-            $parts = array_filter(array_map('trim', explode(',', $inc)));
-            $includes = array_values(array_intersect($parts, $allowedIncludes));
-        }
-
-        // Tous les providers qui ont AU MOINS une offre dans une sous-cat de cette catégorie
         $providerIds = ServiceOffering::query()
             ->select('provider_id')
             ->whereHas('subCategory', function ($q) use ($category) {
@@ -428,29 +253,16 @@ class CategoryController extends Controller
             ->groupBy('provider_id');
 
         $query = User::query()
-            ->with($includes)
-            ->whereHas('role', function ($q) {
-                $q->where('name', 'prestataire');
-            })
             ->whereIn('id', $providerIds)
-            ->when($city, function ($q) use ($city) {
-                $q->where(function ($qq) use ($city) {
-                    $qq->where('company_city', $city)
-                        ->orWhere('personal_address', 'like', "%{$city}%");
-                });
-            })
-            ->when($search, function ($q) use ($search) {
-                $q->where(function ($qq) use ($search) {
-                    $qq->where('first_name', 'like', "%{$search}%")
-                        ->orWhere('last_name', 'like', "%{$search}%")
-                        ->orWhere('company_name', 'like', "%{$search}%");
-                });
-            })
             ->withCount(['serviceOfferings as services_count' => function ($q) use ($category) {
                 $q->whereHas('subCategory', function ($qq) use ($category) {
                     $qq->where('category_id', $category->id);
                 });
             }])
+            ->when($city, fn($q) => $q->where('company_city', $city)->orWhere('personal_address', 'like', "%{$city}%"))
+            ->when($search, fn($q) => $q->where('first_name', 'like', "%{$search}%")
+                ->orWhere('last_name', 'like', "%{$search}%")
+                ->orWhere('company_name', 'like', "%{$search}%"))
             ->orderBy('created_at', 'desc');
 
         $users = $request->get('per_page') === 'all'

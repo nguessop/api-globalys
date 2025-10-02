@@ -30,6 +30,10 @@ class ServiceOffering extends Model
         'tax_rate',
         'discount_amount',
 
+        // Marketplace / E-commerce
+        'stock_quantity',// pour produits ou offres limitées
+        'is_limited_stock',   // service limité ou pas
+
         // Zone
         'city',
         'country',
@@ -298,5 +302,36 @@ class ServiceOffering extends Model
             if ($to)   $qq->where('start_at', '<=', $to);
             $qq->available()->orderBy('start_at');
         }]);
+    }
+
+    public function category(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Category::class,
+            SubCategory::class,
+            'id',              // PK sur sub_categories
+            'id',              // PK sur categories
+            'sub_category_id', // FK local sur service_offerings
+            'category_id'      // FK sur sub_categories
+        );
+    }
+
+    public function scopeSearch($q, string $term)
+    {
+        return $q->where(function($qq) use ($term) {
+            $qq->where('title', 'like', "%$term%")
+                ->orWhere('description', 'like', "%$term%");
+        });
+    }
+
+    public function isAvailable(): bool
+    {
+        if ($this->is_verified === false || $this->status !== self::STATUS_ACTIVE) {
+            return false;
+        }
+        if ($this->is_limited_stock && $this->stock_quantity !== null) {
+            return $this->stock_quantity > 0;
+        }
+        return true;
     }
 }

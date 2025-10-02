@@ -11,7 +11,8 @@ return new class extends Migration {
             $table->id();
 
             // Seules les valeurs autorisées
-            $table->enum('name', ['admin', 'client', 'prestataire', 'entreprise']);
+            $table->string('name')->nullable();
+            $table->string('label')->nullable();
 
             $table->timestamps();
         });

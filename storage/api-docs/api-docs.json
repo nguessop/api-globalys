@@ -1638,7 +1638,7 @@
                 "tags": [
                     "Categories"
                 ],
-                "summary": "Lister les catégories (avec sous-catégories)",
+                "summary": "Lister les catégories avec sous-catégories",
                 "operationId": "3f5817a34833d0a1f4af4548dd3aeaba",
                 "parameters": [
                     {
@@ -1652,7 +1652,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Liste des catégories",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1663,7 +1663,7 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Affichage parfait"
+                                            "example": "Catégories et sous-catégories affichées"
                                         },
                                         "data": {
                                             "type": "array",
@@ -1675,30 +1675,23 @@
                                                     },
                                                     "slug": {
                                                         "type": "string",
-                                                        "example": "nettoyage"
+                                                        "example": "sante"
                                                     },
                                                     "name": {
                                                         "type": "string",
-                                                        "example": "Nettoyage"
+                                                        "example": "Santé & Bien-être"
                                                     },
                                                     "icon": {
                                                         "type": "string",
-                                                        "example": "broom",
-                                                        "nullable": true
-                                                    },
-                                                    "color_class": {
-                                                        "type": "string",
-                                                        "example": "bg-indigo-500",
-                                                        "nullable": true
+                                                        "example": "heart"
                                                     },
                                                     "description": {
                                                         "type": "string",
-                                                        "example": "Services de nettoyage",
-                                                        "nullable": true
+                                                        "example": "Santé, beauté, sport"
                                                     },
                                                     "sub_categories_count": {
                                                         "type": "integer",
-                                                        "example": 5
+                                                        "example": 4
                                                     },
                                                     "sub_categories": {
                                                         "type": "array",
@@ -1706,7 +1699,7 @@
                                                             "properties": {
                                                                 "id": {
                                                                     "type": "integer",
-                                                                    "example": 11
+                                                                    "example": 10
                                                                 },
                                                                 "category_id": {
                                                                     "type": "integer",
@@ -1714,20 +1707,23 @@
                                                                 },
                                                                 "slug": {
                                                                     "type": "string",
-                                                                    "example": "nettoyage-bureaux"
+                                                                    "example": "teleconsultation"
                                                                 },
                                                                 "name": {
                                                                     "type": "string",
-                                                                    "example": "Nettoyage de bureaux"
+                                                                    "example": "Téléconsultation"
                                                                 },
                                                                 "icon": {
                                                                     "type": "string",
-                                                                    "example": "building",
-                                                                    "nullable": true
+                                                                    "example": "stethoscope"
+                                                                },
+                                                                "description": {
+                                                                    "type": "string",
+                                                                    "example": "Consultation médicale à distance"
                                                                 },
                                                                 "service_offerings_count": {
                                                                     "type": "integer",
-                                                                    "example": 12
+                                                                    "example": 15
                                                                 }
                                                             },
                                                             "type": "object"
@@ -1762,27 +1758,23 @@
                                 "properties": {
                                     "name": {
                                         "type": "string",
-                                        "example": "Nettoyage"
+                                        "example": "Santé & Bien-être"
                                     },
                                     "slug": {
                                         "type": "string",
-                                        "example": "nettoyage",
-                                        "nullable": true
+                                        "example": "sante"
                                     },
                                     "icon": {
                                         "type": "string",
-                                        "example": "broom",
-                                        "nullable": true
+                                        "example": "heart"
                                     },
                                     "color_class": {
                                         "type": "string",
-                                        "example": "bg-indigo-500",
-                                        "nullable": true
+                                        "example": "bg-pink-500"
                                     },
                                     "description": {
                                         "type": "string",
-                                        "example": "Services de nettoyage",
-                                        "nullable": true
+                                        "example": "Santé, beauté, sport"
                                     }
                                 },
                                 "type": "object"
@@ -1791,69 +1783,11 @@
                     }
                 },
                 "responses": {
-                    "200": {
-                        "description": "Créé",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Catégorie créée avec succès"
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer",
-                                                        "example": 1
-                                                    },
-                                                    "slug": {
-                                                        "type": "string",
-                                                        "example": "nettoyage"
-                                                    },
-                                                    "name": {
-                                                        "type": "string",
-                                                        "example": "Nettoyage"
-                                                    },
-                                                    "icon": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    },
-                                                    "color_class": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    },
-                                                    "description": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    },
-                                                    "sub_categories": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "object"
-                                                        }
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                    "201": {
+                        "description": "Catégorie créée"
                     },
                     "422": {
                         "description": "Validation error"
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
                     }
                 },
                 "security": [
@@ -1869,7 +1803,6 @@
                     "Categories"
                 ],
                 "summary": "Détails d’une catégorie (par slug)",
-                "description": "Le modèle Category utilise getRouteKeyName() = 'slug'.",
                 "operationId": "e92579e78391b6199e78c2a091dbea0a",
                 "parameters": [
                     {
@@ -1879,97 +1812,13 @@
                         "required": true,
                         "schema": {
                             "type": "string",
-                            "example": "nettoyage"
+                            "example": "sante"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Détails complets de la catégorie récupérés"
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer",
-                                                        "example": 1
-                                                    },
-                                                    "slug": {
-                                                        "type": "string",
-                                                        "example": "nettoyage"
-                                                    },
-                                                    "name": {
-                                                        "type": "string",
-                                                        "example": "Nettoyage"
-                                                    },
-                                                    "icon": {
-                                                        "type": "string",
-                                                        "example": "broom",
-                                                        "nullable": true
-                                                    },
-                                                    "color_class": {
-                                                        "type": "string",
-                                                        "example": "bg-indigo-500",
-                                                        "nullable": true
-                                                    },
-                                                    "description": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    },
-                                                    "sub_categories": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "properties": {
-                                                                "id": {
-                                                                    "type": "integer",
-                                                                    "example": 11
-                                                                },
-                                                                "category_id": {
-                                                                    "type": "integer",
-                                                                    "example": 1
-                                                                },
-                                                                "slug": {
-                                                                    "type": "string",
-                                                                    "example": "nettoyage-bureaux"
-                                                                },
-                                                                "name": {
-                                                                    "type": "string",
-                                                                    "example": "Nettoyage de bureaux"
-                                                                },
-                                                                "icon": {
-                                                                    "type": "string",
-                                                                    "example": "building",
-                                                                    "nullable": true
-                                                                },
-                                                                "service_offerings_count": {
-                                                                    "type": "integer",
-                                                                    "example": 12
-                                                                }
-                                                            },
-                                                            "type": "object"
-                                                        }
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Détails de la catégorie"
                     },
                     "404": {
                         "description": "Not Found"
@@ -1980,17 +1829,15 @@
                 "tags": [
                     "Categories"
                 ],
-                "summary": "Mettre à jour une catégorie (PUT, par slug)",
+                "summary": "Mettre à jour une catégorie",
                 "operationId": "02aa39951e67916277e28086f85909c8",
                 "parameters": [
                     {
                         "name": "category",
                         "in": "path",
-                        "description": "Slug de la catégorie",
                         "required": true,
                         "schema": {
-                            "type": "string",
-                            "example": "nettoyage"
+                            "type": "string"
                         }
                     }
                 ],
@@ -2002,27 +1849,15 @@
                                 "properties": {
                                     "name": {
                                         "type": "string",
-                                        "example": "Nettoyage & Entretien"
+                                        "example": "Santé & Bien-être modifié"
                                     },
                                     "slug": {
                                         "type": "string",
-                                        "example": "nettoyage-entretien",
-                                        "nullable": true
-                                    },
-                                    "icon": {
-                                        "type": "string",
-                                        "example": "broom",
-                                        "nullable": true
-                                    },
-                                    "color_class": {
-                                        "type": "string",
-                                        "example": "bg-indigo-600",
-                                        "nullable": true
+                                        "example": "sante-bien-etre"
                                     },
                                     "description": {
                                         "type": "string",
-                                        "example": "Mise à jour de la description",
-                                        "nullable": true
+                                        "example": "Mise à jour de la description"
                                     }
                                 },
                                 "type": "object"
@@ -2032,168 +1867,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "OK"
-                    },
-                    "422": {
-                        "description": "Validation error"
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
-                    },
-                    "404": {
-                        "description": "Not Found"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "patch": {
-                "tags": [
-                    "Categories"
-                ],
-                "summary": "Mettre à jour une catégorie (PATCH, par slug)",
-                "operationId": "f6cb36bb8aedb9159d7b30573767faf1",
-                "parameters": [
-                    {
-                        "name": "category",
-                        "in": "path",
-                        "description": "Slug de la catégorie",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "example": "nettoyage"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "example": "Nettoyage & Entretien"
-                                    },
-                                    "slug": {
-                                        "type": "string",
-                                        "example": "nettoyage-entretien",
-                                        "nullable": true
-                                    },
-                                    "icon": {
-                                        "type": "string",
-                                        "example": "broom",
-                                        "nullable": true
-                                    },
-                                    "color_class": {
-                                        "type": "string",
-                                        "example": "bg-indigo-600",
-                                        "nullable": true
-                                    },
-                                    "description": {
-                                        "type": "string",
-                                        "example": "Mise à jour de la description",
-                                        "nullable": true
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Catégorie mise à jour avec succès"
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer",
-                                                        "example": 1
-                                                    },
-                                                    "slug": {
-                                                        "type": "string",
-                                                        "example": "nettoyage-entretien"
-                                                    },
-                                                    "name": {
-                                                        "type": "string",
-                                                        "example": "Nettoyage & Entretien"
-                                                    },
-                                                    "icon": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    },
-                                                    "color_class": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    },
-                                                    "description": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    },
-                                                    "sub_categories": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "properties": {
-                                                                "id": {
-                                                                    "type": "integer",
-                                                                    "example": 11
-                                                                },
-                                                                "category_id": {
-                                                                    "type": "integer",
-                                                                    "example": 1
-                                                                },
-                                                                "slug": {
-                                                                    "type": "string",
-                                                                    "example": "nettoyage-bureaux"
-                                                                },
-                                                                "name": {
-                                                                    "type": "string",
-                                                                    "example": "Nettoyage de bureaux"
-                                                                },
-                                                                "icon": {
-                                                                    "type": "string",
-                                                                    "nullable": true
-                                                                },
-                                                                "service_offerings_count": {
-                                                                    "type": "integer",
-                                                                    "example": 12
-                                                                }
-                                                            },
-                                                            "type": "object"
-                                                        }
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation error"
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
+                        "description": "Mise à jour réussie"
                     },
                     "404": {
                         "description": "Not Found"
@@ -2221,66 +1895,13 @@
                         "required": true,
                         "schema": {
                             "type": "string",
-                            "example": "nettoyage"
+                            "example": "sante"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Vos sous catégories affichées"
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer",
-                                                        "example": 11
-                                                    },
-                                                    "category_id": {
-                                                        "type": "integer",
-                                                        "example": 1
-                                                    },
-                                                    "slug": {
-                                                        "type": "string",
-                                                        "example": "nettoyage-bureaux"
-                                                    },
-                                                    "name": {
-                                                        "type": "string",
-                                                        "example": "Nettoyage de bureaux"
-                                                    },
-                                                    "icon": {
-                                                        "type": "string",
-                                                        "example": "building",
-                                                        "nullable": true
-                                                    },
-                                                    "service_offerings_count": {
-                                                        "type": "integer",
-                                                        "example": 12
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found"
+                        "description": "Sous-catégories listées"
                     }
                 }
             }
@@ -2290,14 +1911,12 @@
                 "tags": [
                     "Categories"
                 ],
-                "summary": "Prestataires par catégorie",
-                "description": "Retourne les utilisateurs (prestataires) qui ont au moins une service_offering dans une sous-catégorie de cette catégorie.",
+                "summary": "Lister les prestataires par catégorie",
                 "operationId": "134f8072a3e4261c285b27ddbbeeaa69",
                 "parameters": [
                     {
                         "name": "category",
                         "in": "path",
-                        "description": "Slug (ou ID si le binding est configuré ainsi) de la catégorie",
                         "required": true,
                         "schema": {
                             "type": "string"
@@ -2322,7 +1941,7 @@
                     {
                         "name": "search",
                         "in": "query",
-                        "description": "Nom/prénom/entreprise",
+                        "description": "Filtrer par nom ou entreprise",
                         "schema": {
                             "type": "string"
                         }
@@ -2330,27 +1949,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Prestataires listés avec succès"
-                                        },
-                                        "data": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Prestataires listés"
                     }
                 }
             }
@@ -6272,6 +5871,100 @@
                 ]
             }
         },
+        "/api/service-offerings/sub-categories/{subCategory}/count": {
+            "get": {
+                "tags": [
+                    "ServiceOfferings"
+                ],
+                "summary": "Nombre de services pour une sous-catégorie",
+                "description": "Retourne combien de services appartiennent à une sous-catégorie donnée.",
+                "operationId": "4c5133001a9b93e69a45e05113dca91e",
+                "parameters": [
+                    {
+                        "name": "subCategory",
+                        "in": "path",
+                        "description": "ID de la sous-catégorie",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Nombre de services pour la sous-catégorie"
+                                        },
+                                        "count": {
+                                            "type": "integer",
+                                            "example": 12
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Sous-catégorie non trouvée"
+                    }
+                }
+            }
+        },
+        "/api/service-offerings/stats": {
+            "get": {
+                "tags": [
+                    "ServiceOfferings"
+                ],
+                "summary": "Statistiques globales des services",
+                "description": "Retourne un résumé global : total, actifs, vérifiés, en pause, archivés, mis en avant.",
+                "operationId": "485230a2b0337a1c76be105694e64c65",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Statistiques globales des services"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "example": {
+                                                "total": 120,
+                                                "actifs": 85,
+                                                "verifies": 60,
+                                                "en_pause": 10,
+                                                "archives": 5,
+                                                "mis_en_avant": 20
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/subcategories": {
             "get": {
                 "tags": [
@@ -8557,6 +8250,96 @@
                         }
                     }
                 ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/users/by-account-type/{type}": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Lister les utilisateurs par account_type",
+                "operationId": "1280015595b225c9c9bf81e2b63700b1",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "individual",
+                                "business",
+                                "institution",
+                                "partner"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/users/by-user-type/{type}": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Lister les utilisateurs par user_type",
+                "operationId": "cb74ab79b2fc091adff7789fba26039c",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "client_particulier",
+                                "client_entreprise",
+                                "prestataire_particulier",
+                                "prestataire_entreprise",
+                                "partenaire_strategique"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/users/stats": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Statistiques globales sur les utilisateurs",
+                "operationId": "41c3ff464d34cd58b964a9370402cf9d",
                 "responses": {
                     "200": {
                         "description": "OK"

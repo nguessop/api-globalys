@@ -9,8 +9,8 @@ class ContractsTableSeeder extends Seeder
 {
     public function run(): void
     {
-        $provider = User::where('email','prestataire@globalys.com')->firstOrFail();
-        $client   = User::where('email','client@globalys.com')->firstOrFail();
+        $provider = User::where('email','prestataire1@globalys.com')->firstOrFail();
+        $client   = User::where('email','client1@globalys.com')->firstOrFail();
         $meeting  = Meeting::first();
         $tpl      = ContractTemplate::first();
 

@@ -18,20 +18,19 @@ class BookingSeed extends Seeder
 
         $target = 30; // on veut 30 bookings au total
 
-        // 1) S'assurer d'avoir des offres (au moins 5 pour varier)
+        // 1) S'assurer d'avoir des offres
         $offerCount = ServiceOffering::count();
         if ($offerCount < 5) {
             $this->call(\Database\Seeders\ServiceOfferingSeed::class);
         }
 
-        // Rechargement après éventuel seed
         $offerings = ServiceOffering::query()->inRandomOrder()->get();
         if ($offerings->isEmpty()) {
             $this->command?->warn("Impossible de récupérer des service_offerings. Booking sauté.");
             return;
         }
 
-        // 2) Déterminer combien créer (on complète jusqu'au target)
+        // 2) Nombre de bookings à créer
         $existing = Booking::count();
         $toCreate = max(0, $target - $existing);
         if ($toCreate === 0) {
@@ -41,7 +40,7 @@ class BookingSeed extends Seeder
 
         $now = Carbon::now();
 
-        // 3) Templates variés (comme ton code)
+        // 3) Templates variés
         $templates = [
             [
                 'status'         => Booking::STATUS_PENDING,
@@ -83,60 +82,47 @@ class BookingSeed extends Seeder
             ],
         ];
 
-        // 4) Création répartie sur plusieurs offres
+        // 4) Création bookings
         $created = 0;
         Booking::unguard();
 
         for ($i = 0; $i < $toCreate; $i++) {
-            // Choisir une offre différente à chaque fois (cycle si < $toCreate)
             $offering = $offerings[$i % $offerings->count()];
 
-            // Provider depuis l’offre (ou fallback)
+            // ✅ Provider existant
             $provider = User::find($offering->provider_id)
-                ?? User::query()->where('user_type', 'prestataire')->first()
-                ?? User::query()->where('account_type', 'entreprise')->first()
-                ?? User::factory()->create([
-                    'first_name' => 'Demo', 'last_name' => 'Provider',
-                    'email' => 'provider+'.uniqid()."@example.test",
-                    'account_type' => 'entreprise',
-                    'user_type' => 'prestataire',
-                ]);
+                ?? User::query()
+                    ->whereIn('user_type', ['prestataire_particulier','prestataire_entreprise'])
+                    ->inRandomOrder()
+                    ->first();
+
+            if (!$provider) {
+                $this->command?->warn("Pas de prestataire trouvé → booking sauté.");
+                continue;
+            }
 
             if (!$offering->provider_id) {
                 $offering->provider_id = $provider->id;
                 $offering->save();
             }
 
-            // Client distinct du provider
+            // ✅ Client différent du provider
             $client = User::query()
                 ->where('id', '!=', $provider->id)
-                ->where(function ($q) {
-                    $q->where('user_type', 'client')
-                        ->orWhere('account_type', 'particulier');
-                })
+                ->whereIn('user_type', ['client_particulier','client_entreprise'])
                 ->inRandomOrder()
                 ->first();
 
             if (!$client) {
-                $client = User::factory()->create([
-                    'first_name' => 'Client', 'last_name' => 'Demo',
-                    'email' => 'client+'.uniqid()."@example.test",
-                    'account_type' => 'particulier',
-                    'user_type' => 'client',
-                ]);
+                $this->command?->warn("Pas de client trouvé → booking sauté.");
+                continue;
             }
 
-            // Prix & devise depuis l’offre (fallback si schéma différent)
-            $unitPrice = $offering->price_amount
-                ?? $offering->unit_price
-                ?? $offering->price
-                ?? 10000;
+            // Prix & devise
+            $unitPrice = $offering->price_amount ?? 10000;
+            $currency  = $offering->currency ?? 'XAF';
 
-            $currency  = $offering->currency
-                ?? $offering->price_currency
-                ?? 'XAF';
-
-            // Template à appliquer
+            // Template
             $tpl = $templates[$i % count($templates)];
 
             try {
@@ -144,27 +130,23 @@ class BookingSeed extends Seeder
                     'service_offering_id' => $offering->id,
                     'client_id'           => $client->id,
                     'provider_id'         => $provider->id,
-
                     'quantity'            => 1 + ($i % 3),
                     'unit_price'          => $unitPrice,
                     'currency'            => $currency,
-
                     'tax_rate'            => $tpl['tax_rate'],
                     'status'              => $tpl['status'],
                     'payment_status'      => $tpl['payment_status'],
-
                     'start_at'            => ($tpl['start_at'])(),
                     'end_at'              => ($tpl['end_at'])(),
                     'city'                => $tpl['city'],
                     'address'             => $tpl['address'],
                     'notes_client'        => $tpl['notes_client'] ?? null,
                     'notes_provider'      => $tpl['notes_provider'] ?? null,
-                    // subtotal/tax/total calculés par le modèle (boot creating) si présent
                 ]);
 
                 $created++;
             } catch (\Throwable $e) {
-                $this->command?->warn("Échec création booking #".($i+1)." pour offering {$offering->id} : ".$e->getMessage());
+                $this->command?->warn("⚠️ Échec booking #".($i+1)." : ".$e->getMessage());
             }
         }
 

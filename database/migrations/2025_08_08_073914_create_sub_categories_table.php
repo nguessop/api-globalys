@@ -16,6 +16,11 @@ return new class extends Migration {
             $table->integer('providers_count')->default(0);
             $table->string('average_price')->nullable(); // ex: "45€/h"
             $table->text('description')->nullable();
+
+            // Nouveau : structure JSON du formulaire lié à cette sous-catégorie
+            $table->json('form_schema')->nullable();
+            // ex: [{"name":"surface","type":"number"},{"name":"budget","type":"text"}]
+
             $table->timestamps();
 
             $table->index(['category_id', 'name']);

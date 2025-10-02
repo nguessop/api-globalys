@@ -23,7 +23,13 @@ return new class extends Migration {
             $table->string('company_city', 140)->nullable();
 
             // Type de compte : entreprise ou particulier
-            $table->enum('account_type', ['entreprise', 'particulier'])->index();
+            $table->enum('account_type', [
+                'individual',      // personne physique (particulier, freelance, avocat indépendant, coach…)
+                'business',        // entreprise classique (SARL, SA, PME, cabinet, agence…)
+                'institution',     // acteur public / parapublic (ministère, mairie, hôpital public…)
+                'partner',         // partenaire stratégique (banque, assurance, coopérative, ONG…)
+            ])->default('individual');
+
 
             // Rôle (1 seul)
             $table->foreignId('role_id')->nullable()->constrained()->nullOnDelete();
@@ -49,7 +55,13 @@ return new class extends Migration {
             $table->string('personal_address')->nullable();
 
             // Rôle d’usage (client / prestataire)
-            $table->enum('user_type', ['client', 'prestataire'])->nullable()->index();
+            $table->enum('user_type', [
+                'client_particulier',     // un individu qui consomme (B2C, C2C)
+                'client_entreprise',      // une société qui consomme (B2B)
+                'prestataire_particulier',// un indépendant qui vend (C2C ou B2C)
+                'prestataire_entreprise', // une société qui vend (B2B ou B2C)
+                'partenaire_strategique'  // banque, assurance, ONG, institution publique
+            ])->nullable()->index();
 
             // Photo de profil
             $table->string('profile_photo')->nullable();

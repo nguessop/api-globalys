@@ -62,6 +62,8 @@ class UserController extends Controller
     {
         $user = User::findOrFail($userId);
 
+        dd($user);
+
         return response()->success([
             'views' => $user->profile_views
         ], 'Nombre de vues du profil');
@@ -1023,4 +1025,67 @@ class UserController extends Controller
         return response()->success($items, 'Contrats récupérés');
     }
 
+    /**
+     * @OA\Get(
+     *   path="/api/users/by-account-type/{type}",
+     *   tags={"Users"},
+     *   summary="Lister les utilisateurs par account_type",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="type", in="path", required=true,
+     *      @OA\Schema(type="string", enum={"individual","business","institution","partner"})),
+     *   @OA\Response(response=200, description="OK")
+     * )
+     */
+    public function byAccountType(string $type)
+    {
+        $users = User::where('account_type', $type)->paginate(15);
+
+        return response()->success($users, "Utilisateurs de type {$type}");
+    }
+
+
+    /**
+     * @OA\Get(
+     *   path="/api/users/by-user-type/{type}",
+     *   tags={"Users"},
+     *   summary="Lister les utilisateurs par user_type",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Parameter(name="type", in="path", required=true,
+     *      @OA\Schema(type="string", enum={
+     *          "client_particulier","client_entreprise",
+     *          "prestataire_particulier","prestataire_entreprise",
+     *          "partenaire_strategique"
+     *      })),
+     *   @OA\Response(response=200, description="OK")
+     * )
+     */
+    public function byUserType(string $type)
+    {
+        $users = User::where('user_type', $type)->paginate(15);
+
+        return response()->success($users, "Utilisateurs user_type {$type}");
+    }
+
+    /**
+     * @OA\Get(
+     *   path="/api/users/stats",
+     *   tags={"Users"},
+     *   summary="Statistiques globales sur les utilisateurs",
+     *   security={{"bearerAuth":{}}},
+     *   @OA\Response(response=200, description="OK")
+     * )
+     */
+    public function stats()
+    {
+        $stats = [
+            'total'       => User::count(),
+            'par_account' => User::select('account_type', \DB::raw('count(*) as total'))
+                ->groupBy('account_type')->pluck('total','account_type'),
+            'par_user'    => User::select('user_type', \DB::raw('count(*) as total'))
+                ->groupBy('user_type')->pluck('total','user_type'),
+            'verifies'    => User::whereNotNull('email_verified_at')->count(),
+        ];
+
+        return response()->success($stats, 'Statistiques utilisateurs');
+    }
 }
