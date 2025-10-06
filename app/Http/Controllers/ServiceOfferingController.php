@@ -537,23 +537,41 @@ class ServiceOfferingController extends Controller
      * @OA\Get(
      *   path="/api/service-offerings/{serviceOffering}/availability",
      *   tags={"ServiceOfferings"},
-     *   summary="Disponibilités d'un service",
-     *   description="Retourne les créneaux entre 'from' et 'to' (YYYY-MM-DD).",
-     *   @OA\Parameter(name="serviceOffering", in="path", required=true, @OA\Schema(type="integer")),
-     *   @OA\Parameter(name="from", in="query", @OA\Schema(type="string", format="date")),
-     *   @OA\Parameter(name="to", in="query", @OA\Schema(type="string", format="date")),
-     *   @OA\Parameter(name="status", in="query", @OA\Schema(type="string", enum={"available","full","blocked","cancelled"})),
-     *   @OA\Parameter(name="limit", in="query", @OA\Schema(type="integer", minimum=1, maximum=500)),
+     *   summary="Lister les créneaux disponibles d’un service",
+     *   description="Retourne les créneaux disponibles entre 'from' et 'to' (format YYYY-MM-DD).
+     *                Si aucun paramètre n’est fourni, la plage par défaut couvre les 14 prochains jours à partir d’aujourd’hui.",
+     *   @OA\Parameter(
+     *     name="serviceOffering",
+     *     in="path",
+     *     required=true,
+     *     description="ID du service concerné",
+     *     @OA\Schema(type="integer", example=10)
+     *   ),
+     *   @OA\Parameter(name="from", in="query", description="Date de début (par défaut: aujourd’hui)", @OA\Schema(type="string", format="date")),
+     *   @OA\Parameter(name="to", in="query", description="Date de fin (par défaut: dans 14 jours)", @OA\Schema(type="string", format="date")),
+     *   @OA\Parameter(name="status", in="query", description="Filtrer selon le statut des créneaux", @OA\Schema(type="string", enum={"available","full","blocked","cancelled"})),
+     *   @OA\Parameter(name="limit", in="query", description="Nombre maximum de créneaux renvoyés (max 500)", @OA\Schema(type="integer", minimum=1, maximum=500, example=100)),
      *   @OA\Response(
      *     response=200,
-     *     description="OK",
+     *     description="Liste des créneaux",
      *     @OA\JsonContent(
      *       type="object",
      *       @OA\Property(property="success", type="boolean", example=true),
      *       @OA\Property(property="message", type="string", example="OK"),
      *       @OA\Property(property="data", type="array",
-     *         @OA\Items(type="object",
-     *           example={"id":99,"service_offering_id":10,"start_at":"2025-08-20 09:00:00","end_at":"2025-08-20 10:00:00","status":"available"}
+     *         @OA\Items(
+     *           type="object",
+     *           example={
+     *             "id":99,
+     *             "service_offering_id":10,
+     *             "provider_id":3,
+     *             "start_at":"2025-08-20T09:00:00Z",
+     *             "end_at":"2025-08-20T10:00:00Z",
+     *             "timezone":"Africa/Douala",
+     *             "capacity":1,
+     *             "booked_count":0,
+     *             "status":"available"
+     *           }
      *         )
      *       )
      *     )
@@ -562,18 +580,57 @@ class ServiceOfferingController extends Controller
      */
     public function availability(ServiceOffering $serviceOffering, Request $req)
     {
-        $from = $req->date('from', now());
-        $to   = $req->date('to', now()->copy()->addWeeks(2));
-        $status = $req->input('status');
-        $limit  = min((int) $req->input('limit', 100), 500);
+        // 1) Parse des bornes de date (défauts si absents)
+        $fromInput = $req->input('from');
+        $toInput   = $req->input('to');
 
-        $slots = AvailabilitySlot::query()
+        $from = $fromInput ? Carbon::parse($fromInput) : now();
+        $to   = $toInput   ? Carbon::parse($toInput)   : now()->addWeeks(2);
+
+        // Si l’utilisateur envoie juste une date (YYYY-MM-DD),
+        // on prend toute la journée pour 'to'
+        if (!$toInput || strlen((string)$toInput) <= 10) {
+            $to = $to->endOfDay();
+        }
+        if ($fromInput && strlen((string)$fromInput) <= 10) {
+            $from = $from->startOfDay();
+        }
+
+        // Swap si bornes inversées
+        if ($to->lt($from)) {
+            [$from, $to] = [$to->copy()->startOfDay(), $from->copy()->endOfDay()];
+        }
+
+        // 2) Filtres optionnels
+        $status = $req->input('status'); // 'available','blocked','full','cancelled'
+        $limit  = $req->filled('limit') ? max(1, min((int)$req->input('limit'), 500)) : null;
+
+        // 3) Requête
+        $q = AvailabilitySlot::query()
             ->where('service_offering_id', $serviceOffering->id)
             ->whereBetween('start_at', [$from, $to])
-            ->when($status, fn($w) => $w->where('status', $status))
-            ->orderBy('start_at')
-            ->limit($limit)
-            ->get();
+            ->orderBy('start_at');
+
+        // Par défaut on ne renvoie que les dispos
+        if ($status) {
+            $q->where('status', $status);
+        } else {
+            $q->where('status', 'available');
+        }
+
+        // Masquer les créneaux déjà pleins (optionnel : ?with_full=1 pour les inclure)
+        if (!$req->boolean('with_full', false)) {
+            $q->whereColumn('booked_count', '<', 'capacity');
+        }
+
+        if ($limit) {
+            $q->limit($limit);
+        }
+
+        $slots = $q->get([
+            'id','start_at','end_at','status','capacity','booked_count',
+            'price_override','currency','timezone'
+        ]);
 
         return response()->success($slots);
     }

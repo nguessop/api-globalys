@@ -5730,21 +5730,24 @@
                 "tags": [
                     "ServiceOfferings"
                 ],
-                "summary": "Disponibilités d'un service",
-                "description": "Retourne les créneaux entre 'from' et 'to' (YYYY-MM-DD).",
+                "summary": "Lister les créneaux disponibles d’un service",
+                "description": "Retourne les créneaux disponibles entre 'from' et 'to' (format YYYY-MM-DD).\n     *                Si aucun paramètre n’est fourni, la plage par défaut couvre les 14 prochains jours à partir d’aujourd’hui.",
                 "operationId": "d0e16ed778f660e9609424b697d63d20",
                 "parameters": [
                     {
                         "name": "serviceOffering",
                         "in": "path",
+                        "description": "ID du service concerné",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "example": 10
                         }
                     },
                     {
                         "name": "from",
                         "in": "query",
+                        "description": "Date de début (par défaut: aujourd’hui)",
                         "schema": {
                             "type": "string",
                             "format": "date"
@@ -5753,6 +5756,7 @@
                     {
                         "name": "to",
                         "in": "query",
+                        "description": "Date de fin (par défaut: dans 14 jours)",
                         "schema": {
                             "type": "string",
                             "format": "date"
@@ -5761,6 +5765,7 @@
                     {
                         "name": "status",
                         "in": "query",
+                        "description": "Filtrer selon le statut des créneaux",
                         "schema": {
                             "type": "string",
                             "enum": [
@@ -5774,16 +5779,18 @@
                     {
                         "name": "limit",
                         "in": "query",
+                        "description": "Nombre maximum de créneaux renvoyés (max 500)",
                         "schema": {
                             "type": "integer",
                             "maximum": 500,
-                            "minimum": 1
+                            "minimum": 1,
+                            "example": 100
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Liste des créneaux",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -5803,8 +5810,12 @@
                                                 "example": {
                                                     "id": 99,
                                                     "service_offering_id": 10,
-                                                    "start_at": "2025-08-20 09:00:00",
-                                                    "end_at": "2025-08-20 10:00:00",
+                                                    "provider_id": 3,
+                                                    "start_at": "2025-08-20T09:00:00Z",
+                                                    "end_at": "2025-08-20T10:00:00Z",
+                                                    "timezone": "Africa/Douala",
+                                                    "capacity": 1,
+                                                    "booked_count": 0,
                                                     "status": "available"
                                                 }
                                             }
