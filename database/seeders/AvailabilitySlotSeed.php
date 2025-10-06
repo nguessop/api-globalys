@@ -3,93 +3,73 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 use App\Models\AvailabilitySlot;
 use App\Models\ServiceOffering;
-use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class AvailabilitySlotSeed extends Seeder
 {
     public function run(): void
     {
-        DB::transaction(function () {
-            // Récupérer un prestataire existant
-            $provider = User::where('user_type', 'prestataire')->first();
-            if (!$provider) {
-                $this->command->warn('⚠️ Aucun prestataire trouvé pour le seed AvailabilitySlot.');
-                return;
+        // ⚠️ On suppose que ServiceOffering a bien une colonne provider_id (-> users.id)
+        // et que des services existent déjà (seedés avant).
+        $services = ServiceOffering::query()
+            ->select(['id', 'provider_id'])
+            ->whereNotNull('provider_id')
+            ->inRandomOrder()
+            ->get();
+
+        if ($services->isEmpty()) {
+            $this->command->warn('⚠️ Aucun service (ServiceOffering) trouvé avec un provider_id. Seed les services avant.');
+            return;
+        }
+
+        $timezones = ['Africa/Douala', 'UTC', 'Europe/Paris'];
+        $now = Carbon::now();
+
+        // On génère des créneaux par service (3 à 6 créneaux sur les 2 prochaines semaines)
+        foreach ($services as $service) {
+            $slotsToCreate = rand(3, 6);
+
+            for ($i = 0; $i < $slotsToCreate; $i++) {
+                // Jour entre J+1 et J+14
+                $start = (clone $now)
+                    ->addDays(rand(1, 14))
+                    ->setTime(rand(8, 18), [0, 30][rand(0, 1)]);
+
+                // Durée 1 à 3h
+                $end = (clone $start)->addHours(rand(1, 3));
+
+                // Capacité et remplissage cohérents
+                $capacity = rand(1, 5);
+                $booked = rand(0, $capacity); // peut être 0
+
+                // Eventuel override tarifaire
+                $priceOverride = rand(0, 1) ? rand(10000, 80000) : null;
+
+                AvailabilitySlot::create([
+                    'service_offering_id' => $service->id,
+                    'provider_id'         => $service->provider_id,
+                    'start_at'            => $start,
+                    'end_at'              => $end,
+                    'timezone'            => $timezones[array_rand($timezones)],
+
+                    'capacity'            => $capacity,
+                    'booked_count'        => $booked,
+
+                    'price_override'      => $priceOverride,
+                    'currency'            => $priceOverride ? 'XAF' : null,
+
+                    'is_recurring'        => false,
+                    'recurrence_rule'     => null,
+
+                    'status'              => $booked >= $capacity ? 'full' : 'available',
+                    'notes'               => 'Créneau seed ' . Str::upper(Str::random(4)),
+                ]);
             }
+        }
 
-            // Récupérer une offre de service existante
-            $serviceOffering = ServiceOffering::first();
-            if (!$serviceOffering) {
-                $this->command->warn('⚠️ Aucune offre de service trouvée pour le seed AvailabilitySlot.');
-                return;
-            }
-
-            // Créneau 1 : disponible demain
-            AvailabilitySlot::updateOrCreate(
-                [
-                    'provider_id'          => $provider->id,
-                    'service_offering_id'  => $serviceOffering->id,
-                    'start_at'             => Carbon::now()->addDay()->setTime(9, 0, 0),
-                ],
-                [
-                    'end_at'               => Carbon::now()->addDay()->setTime(11, 0, 0),
-                    'timezone'             => 'Africa/Douala',
-                    'capacity'             => 2,
-                    'booked_count'         => 0,
-                    'price_override'       => null,
-                    'currency'             => 'XAF',
-                    'is_recurring'         => false,
-                    'recurrence_rule'      => null,
-                    'status'               => 'available',
-                    'notes'                => 'Créneau du matin',
-                ]
-            );
-
-            // Créneau 2 : complet dans 3 jours
-            AvailabilitySlot::updateOrCreate(
-                [
-                    'provider_id'          => $provider->id,
-                    'service_offering_id'  => $serviceOffering->id,
-                    'start_at'             => Carbon::now()->addDays(3)->setTime(14, 0, 0),
-                ],
-                [
-                    'end_at'               => Carbon::now()->addDays(3)->setTime(16, 0, 0),
-                    'timezone'             => 'Africa/Douala',
-                    'capacity'             => 3,
-                    'booked_count'         => 3,
-                    'price_override'       => 20000,
-                    'currency'             => 'XAF',
-                    'is_recurring'         => false,
-                    'recurrence_rule'      => null,
-                    'status'               => 'full',
-                    'notes'                => 'Après-midi complet',
-                ]
-            );
-
-            // Créneau 3 : récurrent tous les lundis matin
-            AvailabilitySlot::updateOrCreate(
-                [
-                    'provider_id'          => $provider->id,
-                    'service_offering_id'  => $serviceOffering->id,
-                    'start_at'             => Carbon::now()->next('Monday')->setTime(8, 0, 0),
-                ],
-                [
-                    'end_at'               => Carbon::now()->next('Monday')->setTime(10, 0, 0),
-                    'timezone'             => 'Africa/Douala',
-                    'capacity'             => 1,
-                    'booked_count'         => 0,
-                    'price_override'       => null,
-                    'currency'             => 'XAF',
-                    'is_recurring'         => true,
-                    'recurrence_rule'      => 'FREQ=WEEKLY;BYDAY=MO',
-                    'status'               => 'available',
-                    'notes'                => 'Lundi matin hebdo',
-                ]
-            );
-        });
+        $this->command->info('✅ AvailabilitySlotSeeder : créneaux générés depuis les services (provider_id) sans dépendre des rôles.');
     }
 }

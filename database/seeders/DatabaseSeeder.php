@@ -21,9 +21,9 @@ class DatabaseSeeder extends Seeder
 
         $this->call(\Database\Seeders\RoleSeed::class);
         $this->call(\Database\Seeders\UserSeed::class);
-        // $this->call(\Database\Seeders\ServiceOfferingSeed::class);
+        $this->call(\Database\Seeders\ServiceOfferingSeed::class);
         $this->call(\Database\Seeders\SubscriptionSeed::class);
-        // $this->call(\Database\Seeders\BookingSeed::class);
+        $this->call(\Database\Seeders\BookingSeed::class);
         $this->call(\Database\Seeders\PaymentSeed::class);
         $this->call(\Database\Seeders\ReviewSeed::class);
         $this->call(\Database\Seeders\AvailabilitySlotSeed::class);
@@ -42,8 +42,8 @@ class DatabaseSeeder extends Seeder
             ContractPartiesTableSeeder::class,
             ContractSignaturesTableSeeder::class,
             ContractEventsTableSeeder::class,
-            ServiceOfferingSeed::class,
-            BookingSeed::class,
+            // ServiceOfferingSeed::class,
+            // BookingSeed::class,
         ]);
     }
 }

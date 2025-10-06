@@ -127,6 +127,11 @@ class ServiceOfferingController extends Controller
             ->with([
                 'provider:id,first_name,last_name,company_name,user_type,account_type',
                 'subCategory:id,name,category_id',
+                // 👉 On charge aussi les disponibilités actives du service
+                'availabilitySlots' => fn($slot) => $slot
+                    ->where('status', 'available')
+                    ->where('start_at', '>=', now())
+                    ->orderBy('start_at', 'asc'),
             ]);
 
         // Filtres
@@ -218,7 +223,12 @@ class ServiceOfferingController extends Controller
         $serviceOffering->load([
             'provider',
             'subCategory',
-            'bookings'
+            'bookings',
+            'availabilitySlots' => function ($query) {
+                $query->where('status', 'available')
+                    ->where('start_at', '>=', now())
+                    ->orderBy('start_at', 'asc');
+            },
         ]);
 
         return response()->success($serviceOffering);
